@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ドラクエ風RPG 完成版</title>
+
+<style>
+
+body{
+    margin:0;
+    background:
+        radial-gradient(circle,#223,#000);
+    color:white;
+    font-family:monospace;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+#game{
+    width:900px;
+}
+
+canvas{
+    width:900px;
+    height:500px;
+    border:5px solid white;
+    background:black;
+    box-shadow:
+        0 0 30px rgba(255,255,255,0.3);
+}
+
+#ui{
+    margin-top:10px;
+    display:flex;
+    gap:10px;
+}
+
+.box{
+    border:4px solid white;
+    background:#111;
+    padding:12px;
+    border-radius:10px;
+}
+
+#msg{
+    width:620px;
+    min-height:150px;
+    font-size:24px;
+    line-height:1.5;
+}
+
+#commands{
+    width:220px;
+    font-size:24px;
+}
+
+.command{
+    padding:8px;
+}
+
+.selected{
+    background:white;
+    color:black;
+}
+
+</style>
+</head>
+<body>
+
+<div id="game">
+
+    <canvas
+        id="canvas"
+        width="900"
+        height="500">
+    </canvas>
+
+    <div id="ui">
+
+        <div id="msg" class="box">
+            スライム が あらわれた！
+        </div>
+
+        <div id="commands" class="box"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+const canvas =
+    document.getElementById("canvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+const msg =
+    document.getElementById("msg");
+
+const commandsDiv =
+    document.getElementById("commands");
+
+const commandList = [
+
+    "たたかう",
+    "メラ",
+    "ホイミ",
+    "ぼうぎょ",
+    "にげる"
+];
+
+const enemyNames = [
+
+    "スライム",
+    "ドラキー",
+    "ゴーレム",
+    "キメラ",
+    "ドラゴン",
+    "魔王"
+];
+
+let selected = 0;
+
+let defending = false;
+
+const player = {
+
+    hp:80,
+    maxHp:80,
+
+    mp:30,
+    maxMp:30,
+
+    atk:14,
+
+    lv:1,
+
+    exp:0,
+    nextExp:30
+};
+
+const enemy = {
+
+    name:"スライム",
+
+    hp:30,
+    maxHp:30,
+
+    atk:5,
+
+    level:1
+};
+
+function renderCommands(){
+
+    commandsDiv.innerHTML = "";
+
+    commandList.forEach((cmd,index)=>{
+
+        const div =
+            document.createElement("div");
+
+        div.className = "command";
+
+        if(index === selected){
+
+            div.classList.add("selected");
+
+            div.innerHTML = "▶ " + cmd;
+        }
+        else{
+
+            div.innerHTML = "　" + cmd;
+        }
+
+        commandsDiv.appendChild(div);
+    });
+}
+
+function drawBackground(){
+
+    const sky =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            500
+        );
+
+    sky.addColorStop(0,"#112244");
+    sky.addColorStop(1,"#000");
+
+    ctx.fillStyle = sky;
+
+    ctx.fillRect(0,0,900,500);
+
+    const ground =
+        ctx.createLinearGradient(
+            0,
+            300,
+            0,
+            500
+        );
+
+    ground.addColorStop(0,"#224400");
+    ground.addColorStop(1,"#111");
+
+    ctx.fillStyle = ground;
+
+    ctx.fillRect(
+        0,
+        320,
+        900,
+        180
+    );
+}
+
+function drawPlayer(){
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.5)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        180,
+        390,
+        50,
+        15,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    const grad =
+        ctx.createLinearGradient(
+            0,
+            240,
+            0,
+            380
+        );
+
+    grad.addColorStop(0,"#ffee55");
+    grad.addColorStop(1,"#cc9900");
+
+    ctx.fillStyle = grad;
+
+    ctx.fillRect(
+        140,
+        240,
+        80,
+        120
+    );
+
+    ctx.fillStyle = "white";
+
+    ctx.fillRect(160,270,8,8);
+    ctx.fillRect(192,270,8,8);
+
+    ctx.fillStyle = "#ccc";
+
+    ctx.fillRect(
+        230,
+        240,
+        10,
+        100
+    );
+}
+
+function drawEnemy(){
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.5)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        680,
+        390,
+        90,
+        20,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    const grad =
+        ctx.createRadialGradient(
+            680,
+            240,
+            20,
+            680,
+            240,
+            100
+        );
+
+    grad.addColorStop(0,"#ff6666");
+    grad.addColorStop(1,"#660000");
+
+    ctx.fillStyle = grad;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        680,
+        240,
+        90,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle = "white";
+
+    ctx.fillRect(650,220,10,10);
+    ctx.fillRect(710,220,10,10);
+}
+
+function drawStatus(){
+
+    ctx.fillStyle = "white";
+
+    ctx.font =
+        "26px monospace";
+
+    ctx.fillText(
+        `HP ${player.hp}/${player.maxHp}`,
+        20,
+        40
+    );
+
+    ctx.fillText(
+        `MP ${player.mp}/${player.maxMp}`,
+        20,
+        80
+    );
+
+    ctx.fillText(
+        `LV ${player.lv}`,
+        20,
+        120
+    );
+
+    ctx.fillText(
+        `EXP ${player.exp}/${player.nextExp}`,
+        20,
+        160
+    );
+
+    ctx.fillText(
+        `${enemy.name} HP:${enemy.hp}`,
+        520,
+        40
+    );
+}
+
+function draw(){
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    drawBackground();
+
+    drawEnemy();
+
+    drawPlayer();
+
+    drawStatus();
+}
+
+function levelUp(){
+
+    player.lv++;
+
+    player.exp = 0;
+
+    player.nextExp += 20;
+
+    player.maxHp += 20;
+
+    player.maxMp += 10;
+
+    player.atk += 4;
+
+    // 全回復
+    player.hp = player.maxHp;
+
+    player.mp = player.maxMp;
+
+    msg.innerHTML =
+        `レベルアップ！<br>
+        LV ${player.lv} になった！<br>
+        HPとMPが全回復した！`;
+
+    draw();
+}
+
+function nextEnemy(){
+
+    enemy.level++;
+
+    const idx =
+        Math.min(
+            enemy.level - 1,
+            enemyNames.length - 1
+        );
+
+    enemy.name =
+        enemyNames[idx];
+
+    enemy.maxHp += 25;
+
+    enemy.hp = enemy.maxHp;
+
+    enemy.atk += 4;
+
+    msg.innerHTML =
+        `${enemy.name} が あらわれた！`;
+
+    draw();
+}
+
+function enemyTurn(){
+
+    if(enemy.hp <= 0){
+
+        return;
+    }
+
+    let damage =
+        Math.floor(
+            Math.random()*enemy.atk
+        ) + 5;
+
+    if(defending){
+
+        damage =
+            Math.floor(damage/2);
+
+        defending = false;
+    }
+
+    player.hp -= damage;
+
+    if(player.hp < 0){
+
+        player.hp = 0;
+    }
+
+    msg.innerHTML +=
+        `<br>${enemy.name} のこうげき！<br>
+        ${damage} ダメージ！`;
+
+    draw();
+
+    if(player.hp <= 0){
+
+        setTimeout(()=>{
+
+            alert("ゲームオーバー");
+
+            location.reload();
+
+        },800);
+    }
+}
+
+function checkEnemyDeath(){
+
+    if(enemy.hp <= 0){
+
+        enemy.hp = 0;
+
+        draw();
+
+        const expGain =
+            enemy.level * 15;
+
+        player.exp += expGain;
+
+        msg.innerHTML +=
+            `<br>${enemy.name} をたおした！<br>
+            EXP ${expGain} かくとく！`;
+
+        if(player.exp >= player.nextExp){
+
+            setTimeout(()=>{
+
+                levelUp();
+
+            },1200);
+        }
+
+        setTimeout(()=>{
+
+            nextEnemy();
+
+        },2500);
+
+        return true;
+    }
+
+    return false;
+}
+
+function attack(){
+
+    const damage =
+        Math.floor(
+            Math.random()*player.atk
+        ) + 8;
+
+    enemy.hp -= damage;
+
+    msg.innerHTML =
+        `ゆうしゃのこうげき！<br>
+        ${damage} ダメージ！`;
+
+    draw();
+
+    if(checkEnemyDeath()){
+
+        return;
+    }
+
+    setTimeout(enemyTurn,900);
+}
+
+function fire(){
+
+    if(player.mp < 5){
+
+        msg.innerHTML =
+            "MPがたりない！";
+
+        return;
+    }
+
+    player.mp -= 5;
+
+    const damage =
+        Math.floor(Math.random()*30)+20;
+
+    enemy.hp -= damage;
+
+    msg.innerHTML =
+        `メラゾーマ！<br>
+        ${damage} ダメージ！`;
+
+    draw();
+
+    if(checkEnemyDeath()){
+
+        return;
+    }
+
+    setTimeout(enemyTurn,900);
+}
+
+function heal(){
+
+    if(player.mp < 4){
+
+        msg.innerHTML =
+            "MPがたりない！";
+
+        return;
+    }
+
+    player.mp -= 4;
+
+    const heal =
+        Math.floor(Math.random()*25)+20;
+
+    player.hp += heal;
+
+    if(player.hp > player.maxHp){
+
+        player.hp = player.maxHp;
+    }
+
+    msg.innerHTML =
+        `ベホイミ！<br>
+        HPが ${heal} かいふく！`;
+
+    draw();
+
+    setTimeout(enemyTurn,900);
+}
+
+function defend(){
+
+    defending = true;
+
+    msg.innerHTML =
+        "ぼうぎょしている！";
+
+    draw();
+
+    setTimeout(enemyTurn,900);
+}
+
+function runAway(){
+
+    const success =
+        Math.random() < 0.3;
+
+    if(success){
+
+        msg.innerHTML =
+            "うまく にげだした！";
+
+        setTimeout(()=>{
+
+            location.reload();
+
+        },1200);
+    }
+    else{
+
+        msg.innerHTML =
+            "にげられない！";
+
+        setTimeout(enemyTurn,900);
+    }
+}
+
+window.addEventListener("keydown",(e)=>{
+
+    e.preventDefault();
+
+    if(e.key === "ArrowUp"){
+
+        selected--;
+
+        if(selected < 0){
+
+            selected =
+                commandList.length - 1;
+        }
+
+        renderCommands();
+    }
+
+    if(e.key === "ArrowDown"){
+
+        selected++;
+
+        if(selected >= commandList.length){
+
+            selected = 0;
+        }
+
+        renderCommands();
+    }
+
+    if(e.key === "Enter"){
+
+        if(player.hp <= 0 ||
+           enemy.hp <= 0){
+
+            return;
+        }
+
+        switch(selected){
+
+            case 0:
+                attack();
+                break;
+
+            case 1:
+                fire();
+                break;
+
+            case 2:
+                heal();
+                break;
+
+            case 3:
+                defend();
+                break;
+
+            case 4:
+                runAway();
+                break;
+        }
+
+        renderCommands();
+    }
+});
+
+renderCommands();
+
+draw();
+
+</script>
+
+</body>
+</html>

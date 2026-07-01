@@ -77,10 +77,10 @@ def setup_gpio():
     if not _gpio_initialized:
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(PIN_LED, GPIO.OUT)
-        GPIO.setup(PIN_VM, GPIO.OUT)
+        GPIO.setup(PIN_NSLEEP, GPIO.OUT)
         GPIO.output(PIN_LED, 0)
         # 初期状態は安全のためDisable(0)にしておく
-        GPIO.output(PIN_VM, 0) 
+        GPIO.output(PIN_NSLEEP, 0)
         _gpio_initialized = True
 
 def setup_motors():
@@ -93,15 +93,28 @@ def setup_motors():
         # pigpio接続を使い回す (毎回接続すると不安定になるため)
         if _factory is None:
             _factory = PiGPIOFactory()
-            
-        motor_left = Motor(forward=PIN_LEFT_FORWARD, backward=PIN_LEFT_BACKWARD, pin_factory=_factory)
-        motor_right = Motor(forward=PIN_RIGHT_FORWARD, backward=PIN_RIGHT_BACKWARD, pin_factory=_factory)
-        setup_gpio() # LEDなども一緒に準備
+
+        motor_left = Motor(
+            forward=PIN_LEFT_IN1,
+            backward=PIN_LEFT_IN2,
+            pin_factory=_factory
+        )
+
+        motor_right = Motor(
+            forward=PIN_RIGHT_IN1,
+            backward=PIN_RIGHT_IN2,
+            pin_factory=_factory
+        )
+
+        setup_gpio()  # LEDなども一緒に準備
+
     except Exception as e:
         print(f"Motor Setup Error: {e}")
         if make_csv:
-            try: make_csv.print('serious_error', f"Motor Setup Error: {e}")
-            except Exception: pass
+            try:
+                make_csv.print('serious_error', f"Motor Setup Error: {e}")
+            except Exception:
+                pass
         motor_right = None
         motor_left = None
 
@@ -181,7 +194,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
 
     # 移動開始時にVMを有効化
     if _gpio_initialized:
-        GPIO.output(PIN_VM, 1)
+        GPIO.output(PIN_NSLEEP, 1)
 
 
 # 1. 逆さ判定による方向反転

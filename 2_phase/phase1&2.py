@@ -213,7 +213,7 @@ def main():
                         phase = 3
                         continue
 
-                    FALL_TIMEOUT_SEC = 180.0
+                    FALL_TIMEOUT_SEC = 1800.0
                     fall_start_time = time.time()
 
                     consecutive_count = 0
@@ -243,7 +243,7 @@ def main():
                         # ② タイムアウトチェックをループ先頭で必ず実行
                         #    （Noneが続いてもタイムアウトで必ず抜けられる）
                         if time.time() - fall_start_time >= FALL_TIMEOUT_SEC:
-                            print("3分経過 → 強制分離")
+                            print("300分経過 → 強制分離")
                             log_msg('warning', 'FALL timeout reached, forced separation')
                             break
 

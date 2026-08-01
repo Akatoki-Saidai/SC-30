@@ -271,7 +271,8 @@ def main():
                         log_msg('alt', alt_now)
                         log_msg('msg', f"Δalt(1s)={d_alt:.3f} m ({consecutive_count}/{REQUIRED_COUNT})")
 
-                        if alt_now <= 10.0 and d_alt <= D_ALT_THRESH:
+                        # フェーズ移行の高度を7.5 mに
+                        if alt_now <= 7.5 and d_alt <= D_ALT_THRESH:
                             consecutive_count += 1
                         else:
                             consecutive_count = 0

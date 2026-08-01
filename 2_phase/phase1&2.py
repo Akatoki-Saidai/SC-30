@@ -11,18 +11,40 @@ LED_PIN = 5
 NICHROME_PIN = 16
 
 # ==========================================
-# モジュール読み込み
+# 個別モジュール読み込み（失敗したら None を代入）
 # ==========================================
+# 各センサ／モジュールは実機環境でのみ利用可能な依存があるため、
+# インポート時に失敗しても他の機能をテストできるように個別にガードします。
 try:
     from camera import Camera
+except Exception as e:
+    Camera = None
+    print(f"Camera import error: {e}")
+
+try:
     from bno055 import BNO055
+except Exception as e:
+    BNO055 = None
+    print(f"BNO055 import error: {e}")
+
+try:
     from bme280 import BME280Sensor
+except Exception as e:
+    BME280Sensor = None
+    print(f"BME280 import error: {e}")
+
+try:
     from gps import idokeido, calculate_distance_and_angle
+except Exception as e:
+    idokeido = None
+    calculate_distance_and_angle = None
+    print(f"GPS import error: {e}")
+
+try:
     import motordrive as md
-except ImportError as e:
-    print(f"【警告】モジュール読み込みエラー: {e}")
-    print("一部の機能が制限されますが、続行します。")
-    time.sleep(2)
+except Exception as e:
+    md = None
+    print(f"motordrive import error: {e}")
 
 
 # ==========================================
@@ -33,17 +55,23 @@ def setup_sensors():
     print("bnoセットアップ開始")
     bno = None
     try:
-        bno = BNO055()
-        if not bno.begin():
-            print("BNO055: Init Failed")
-            bno = None
+        if BNO055 is not None:
+            bno = BNO055()
+            if not bno.begin():
+                print("BNO055: Init Failed")
+                bno = None
+        else:
+            print("BNO055 モジュールが利用できません（インポート失敗）")
     except Exception as e:
         print(f"BNO055 Setup Error: {e}")
 
     print("cameraセットアップ開始")
     cam = None
     try:
-        cam = Camera(model_path="./my_custom_model.pt", debug=True)
+        if Camera is not None:
+            cam = Camera(model_path="./my_custom_model.pt", debug=True)
+        else:
+            print("Camera モジュールが利用できません（インポート失敗）")
     except Exception as e:
         print(f"Camera Setup Error: {e}")
 
@@ -51,20 +79,26 @@ def setup_sensors():
     bme = None
     qnh = 1013.25
     try:
-        bme = BME280Sensor(debug=False)
-        if bme.calib_ok:
-            qnh = bme.baseline()
+        if BME280Sensor is not None:
+            bme = BME280Sensor(debug=False)
+            if bme.calib_ok:
+                qnh = bme.baseline()
+            else:
+                print("BME280: Calibration Failed")
+                bme = None
         else:
-            print("BME280: Calibration Failed")
-            bme = None
+            print("BME280 モジュールが利用できません（インポート失敗）")
     except Exception as e:
         print(f"BME280 Setup Error: {e}")
 
     print("モータセットアップ開始")
     motor_ok = False
     try:
-        md.setup_motors()
-        motor_ok = True
+        if md is not None:
+            md.setup_motors()
+            motor_ok = True
+        else:
+            print("motordrive モジュールが利用できません（インポート失敗）")
     except Exception as e:
         print(f"Motor Setup Error: {e}")
 

@@ -1,138 +1,126 @@
 import serial
 import pynmea2
-import time
 
 
-PORT = "/dev/serial0"
-BAUD = 115200
+class GPS:
 
+    def __init__(
+        self,
+        port="/dev/serial0",
+        baudrate=115200
+    ):
 
-ser = serial.Serial(
-    PORT,
-    BAUD,
-    timeout=1
-)
+        self.ser = serial.Serial(
+            port,
+            baudrate,
+            timeout=1
+        )
 
+        self.data = {
+            "lat": None,
+            "lon": None,
+            "speed": None,
+            "course": None,
+            "altitude": None,
+            "satellites": None,
+            "hdop": None,
+            "fix": 0
+        }
 
-print("GPS single measurement start")
+    def update(self):
 
+        while True:
 
-data = {
-    "lat": None,
-    "lon": None,
-    "speed": None,
-    "course": None,
-    "altitude": None,
-    "satellites": None,
-    "hdop": None,
-    "fix": 0
-}
+            line = self.ser.readline().decode(
+                "ascii",
+                errors="ignore"
+            ).strip()
 
-
-while True:
-
-    line = ser.readline().decode(
-        "ascii",
-        errors="ignore"
-    ).strip()
-
-
-    if not line:
-        continue
-
-
-    try:
-
-        # ----------------
-        # RMC
-        # ----------------
-
-        if line.startswith("$GNRMC"):
-
-            msg = pynmea2.parse(line)
-
-
-            if msg.status == "A":
-
-                data["lat"] = msg.latitude
-                data["lon"] = msg.longitude
-
-                try:
-                    data["speed"] = float(
-                        msg.spd_over_grnd
-                    )
-
-                except:
-                    pass
-
-
-                try:
-                    data["course"] = float(
-                        msg.true_course
-                    )
-
-                except:
-                    pass
-
-
-
-        # ----------------
-        # GGA
-        # ----------------
-
-        elif line.startswith("$GNGGA"):
-
-            msg = pynmea2.parse(line)
-
+            if not line:
+                continue
 
             try:
-                data["fix"] = int(
-                    msg.gps_qual
-                )
 
-                data["satellites"] = int(
-                    msg.num_sats
-                )
+                # ----------------
+                # RMC
+                # ----------------
+                if line.startswith("$GNRMC"):
 
-                data["hdop"] = float(
-                    msg.horizontal_dil
-                )
+                    msg = pynmea2.parse(line)
 
-                data["altitude"] = float(
-                    msg.altitude
-                )
+                    if msg.status == "A":
 
-            except:
-                pass
+                        self.data["lat"] = msg.latitude
+                        self.data["lon"] = msg.longitude
+
+                        try:
+                            self.data["speed"] = float(
+                                msg.spd_over_grnd
+                            )
+                        except:
+                            pass
+
+                        try:
+                            self.data["course"] = float(
+                                msg.true_course
+                            )
+                        except:
+                            pass
+
+                # ----------------
+                # GGA
+                # ----------------
+                elif line.startswith("$GNGGA"):
+
+                    msg = pynmea2.parse(line)
+
+                    try:
+                        self.data["fix"] = int(
+                            msg.gps_qual
+                        )
+
+                        self.data["satellites"] = int(
+                            msg.num_sats
+                        )
+
+                        self.data["hdop"] = float(
+                            msg.horizontal_dil
+                        )
+
+                        self.data["altitude"] = float(
+                            msg.altitude
+                        )
+
+                    except:
+                        pass
+
+                # データ取得完了
+                if (
+                    self.data["lat"] is not None
+                    and self.data["lon"] is not None
+                    and self.data["fix"] > 0
+                ):
+                    return self.data
+
+            except pynmea2.ParseError:
+                continue
+
+    def get_data(self):
+        return self.data
+
+    def close(self):
+        self.ser.close()
 
 
+# --------------------------
+# 使用例
+# --------------------------
+if __name__ == "__main__":
 
-        # RMC + GGA取得完了
+    gps = GPS()
 
-        if (
-            data["lat"] is not None
-            and data["lon"] is not None
-            and data["fix"] > 0
-        ):
+    gps.update()
 
-            print("\nGPS DATA")
-            print("----------------")
-            print(f"Latitude : {data['lat']}")
-            print(f"Longitude: {data['lon']}")
-            print(f"Speed    : {data['speed']} knot")
-            print(f"Course   : {data['course']} deg")
-            print(f"Altitude : {data['altitude']} m")
-            print(f"Satellites: {data['satellites']}")
-            print(f"HDOP     : {data['hdop']}")
-            print(f"FIX      : {data['fix']}")
+    data = gps.get_data()
 
-            break
-
-
-    except pynmea2.ParseError:
-        continue
-
-
-ser.close()
-
-print("\nGPS measurement finished")
+    gps.close()

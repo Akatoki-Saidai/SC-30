@@ -24,9 +24,23 @@ import motordrive
 
 print("--- モーターテスト開始 ---")
 
-# DRV8411A の初期化 (GPIOピンは環境に合わせて設定)
-# 例: Left IN1=17, IN2=27, Right IN1=22, IN2=23
-drive = motordrive.DRV8411A(pin_left_in1=17, pin_left_in2=27, pin_right_in1=22, pin_right_in2=23)
+# ---------------------------------------------------------
+# 定数・ピン設定
+# ---------------------------------------------------------
+delta_power = 0.1 # スムーズな加速・減速のための刻み幅
+MAX_POWER_LIMIT = 6.0/8.4 #8.4V満充電時に6V相当の電圧にするための安全係数
+
+# DCモータのピン設定 (gpiozero用: BCM番号)
+# ※ 実機の配線に合わせて数値を変更してください
+PIN_RIGHT_FORWARD = 18 
+PIN_RIGHT_BACKWARD = 23 
+
+PIN_LEFT_FORWARD = 13 
+PIN_LEFT_BACKWARD = 24 
+
+# その他のGPIOピン (RPi.GPIO用: BCM番号)
+PIN_LED = 5
+PIN_VM = 4
 
 try:
     print("前進 (w)")

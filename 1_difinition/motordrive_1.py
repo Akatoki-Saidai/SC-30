@@ -1,7 +1,6 @@
 import time
 import board
 import busio
-from adafruit_drv8411a import DRV8411A
 from bno055 import BNO055
 
 # GPIO / I2C ピン設定

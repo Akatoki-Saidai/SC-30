@@ -6,7 +6,9 @@ class DummyBNO055:
     def begin(self):
         return True
     def gyroscope(self):
-        return (0.0, 0.0, 0.0)
+        return [0.0, 0.0, 0.0]  # リストで返す
+    def linear_acceleration(self):
+        return [0.0, 0.0, 0.0]  # 追加
 
 # モジュールキャッシュにダミーを登録して motordrive 内でのインポートを差し替える
 sys.modules['bno055'] = type('bno055_module', (), {'BNO055': DummyBNO055})

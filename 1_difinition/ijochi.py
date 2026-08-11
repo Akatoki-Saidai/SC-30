@@ -36,7 +36,7 @@ def abnormal_check(sensor_name, value_name, sensor_value, ERROR_FLAG=True):
         # 値があるときに処理
         if sensor_value is not None:
             # BNOはリストで帰ってくる
-            if isinstance(sensor_value, list):
+            if isinstance(sensor_value, (list, tuple)):
                 # sensor_valueが全て0の場合は異常値
                 if all(v == 0 for v in sensor_value) and value_name != "gyro":
                     filtered_value = None

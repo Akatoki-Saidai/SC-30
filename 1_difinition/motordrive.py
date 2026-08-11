@@ -254,8 +254,15 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
             while time.time() - start_t < remaining_time:
                 is_moving = False
                 
-                # ijochiの仕様に合わせて関数を渡し、自動リトライ＆取得を任せる
-                gyro = ijochi.abnormal_check("gyro", bno.gyroscope, ERROR_FLAG=False)
+                # まずセンサーから値を実行・取得する
+                gyro = bno.gyroscope()
+
+                if gyro is None:
+                    stack_detected = False
+                    break
+
+                # 取得した gyro を第3引数として渡し、第1引数に "bno"、第2引数に "gyro" を指定する
+                gyro = ijochi.abnormal_check("bno", "gyro", gyro, ERROR_FLAG=False)
                 lin_accel = ijochi.abnormal_check("accel_line", bno.linear_acceleration, ERROR_FLAG=False)
 
                 if gyro is not None and lin_accel is not None:

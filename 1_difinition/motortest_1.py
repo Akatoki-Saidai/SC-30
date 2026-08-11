@@ -1,20 +1,12 @@
 import sys
 import time
 
-# bno055のインポートによる無限ループ処理を回避するためのダミークラス
+# bno055のインポートによるエラーや無限ループを回避するためのダミークラス
 class DummyBNO055:
-    def __init__(self, *args, **kwargs):
-        pass
     def begin(self):
         return True
-    def getVector(self, *args, **kwargs):
+    def gyroscope(self):
         return (0.0, 0.0, 0.0)
-    def getQuat(self):
-        return (1.0, 0.0, 0.0, 0.0)
-    def getCalibration(self):
-        return (0, 0, 0, 0)
-    def getTemp(self):
-        return 25
 
 # モジュールキャッシュにダミーを登録して motordrive 内でのインポートを差し替える
 sys.modules['bno055'] = type('bno055_module', (), {'BNO055': DummyBNO055})
@@ -22,54 +14,45 @@ sys.modules['bno055'] = type('bno055_module', (), {'BNO055': DummyBNO055})
 # ダミー登録後に motordrive をインポート
 import motordrive
 
-print("--- モーターテスト開始 ---")
+def main():
+    print("--- モーターテスト開始 ---")
+    print("コマンドを入力してください (方向: w/s/a/d/q/e, 反転付与: r, 終了: exit または Ctrl+C)")
+    
+    try:
+        while True:
+            cmd = input("\nコマンド入力 > ").strip().lower()
+            if not cmd or cmd == 'exit':
+                print("テストを終了するよ。")
+                break
+            
+            # 'r' が含まれていれば逆さま走行（is_inverted=True）と判定
+            is_inv = 'r' in cmd
+            d = cmd.replace('r', '')
+            
+            # 有効な方向コマンドか判定
+            if d in ['w', 's', 'a', 'd', 'q', 'e']:
+                print(f"移動実行: 方向='{d}', 逆さま判定={is_inv}")
+                
+                # powerは0.0~1.0の範囲で指定 (ここでは0.5、動作時間は2秒)
+                stuck = motordrive.move(
+                    direction=d, 
+                    power=0.5, 
+                    duration=2.0, 
+                    is_inverted=is_inv, 
+                    enable_stack_check=True
+                )
+                
+                # スタックが検知された場合の解除コード実行
+                if stuck == 1:
+                    print(">> スタックを検知したよ。スタック解除動作を開始します。")
+                    motordrive.check_stuck(stuck, is_inverted=is_inv)
+            else:
+                print("無効なコマンドだよ。w (前進), s (後退), a (左旋回), d (右旋回), q (左後退), e (右後退) で入力してね。")
 
-# ---------------------------------------------------------
-# 定数・ピン設定
-# ---------------------------------------------------------
-delta_power = 0.1 # スムーズな加速・減速のための刻み幅
-MAX_POWER_LIMIT = 6.0/8.4 #8.4V満充電時に6V相当の電圧にするための安全係数
+    except KeyboardInterrupt:
+        print("\n中断されたよ。")
+    finally:
+        motordrive.cleanup()
 
-# DCモータのピン設定 (gpiozero用: BCM番号)
-# ※ 実機の配線に合わせて数値を変更してください
-PIN_RIGHT_FORWARD = 18 
-PIN_RIGHT_BACKWARD = 23 
-
-PIN_LEFT_FORWARD = 13 
-PIN_LEFT_BACKWARD = 24 
-
-# その他のGPIOピン (RPi.GPIO用: BCM番号)
-PIN_LED = 5
-PIN_VM = 4
-
-try:
-    print("前進 (w)")
-    drive.w(duty=50, drive_time=2)
-    time.sleep(1)
-
-    print("後退 (s)")
-    drive.s(duty=50, drive_time=2)
-    time.sleep(1)
-
-    print("左旋回 (a)")
-    drive.a(duty=50, drive_time=2)
-    time.sleep(1)
-
-    print("右旋回 (d)")
-    drive.d(duty=50, drive_time=2)
-    time.sleep(1)
-
-    print("左後退 (q)")
-    drive.q(duty=50, drive_time=2)
-    time.sleep(1)
-
-    print("右後退 (e)")
-    drive.e(duty=50, drive_time=2)
-    time.sleep(1)
-
-    print("--- テスト完了 ---")
-
-except KeyboardInterrupt:
-    print("中断されました。")
-finally:
-    drive.cleanup()
+if __name__ == "__main__":
+    main()

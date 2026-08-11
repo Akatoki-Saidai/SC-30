@@ -263,7 +263,11 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
 
                 # 取得した gyro を第3引数として渡し、第1引数に "bno"、第2引数に "gyro" を指定する
                 gyro = ijochi.abnormal_check("bno", "gyro", gyro, ERROR_FLAG=False)
-                lin_accel = ijochi.abnormal_check("accel_line", bno.linear_acceleration, ERROR_FLAG=False)
+                lin_accel = bno.linear_acceleration()
+                if lin_accel is not None:
+                    lin_accel = ijochi.abnormal_check(
+                        "bno", "linear_accel", lin_accel, ERROR_FLAG=False
+                    )
 
                 if gyro is not None and lin_accel is not None:
                     if direction in ['a', 'd', 'q', 'e']:

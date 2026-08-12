@@ -151,6 +151,7 @@ def main():
     try:
         while True:
             cmd = input("\nコマンド入力 > ").strip().lower()
+            dur = input("駆動時間 (秒) > ").strip()
             if not cmd or cmd == "exit":
                 break
 
@@ -159,7 +160,7 @@ def main():
 
             if d in ["w", "s", "a", "d", "q", "e"]:
                 print(f"動作実行中: 方向='{d}', 反転={is_inv} (2秒間)")
-                move(d, power=0.5, duration=2.0, is_inverted=is_inv)
+                move(d, power=0.5, duration=float(dur), is_inverted=is_inv)
             else:
                 print("無効なコマンドだよ。w/s/a/d/q/e で入力してね。")
 

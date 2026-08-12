@@ -153,7 +153,7 @@ def main():
                                     print("ターゲットを見失いました。探索のため右回転します。")
                                     lost_count += 1
                                     if motor_ok:
-                                        md.move('e', power=0.7, duration=0.5, is_inverted=is_inverted, enable_stack_check=False)
+                                        md.move('e', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)
                                         
                                     #10回連続（約5秒間）見失ったら、GPSで現在地を確認する
                                     if lost_count >= 10:

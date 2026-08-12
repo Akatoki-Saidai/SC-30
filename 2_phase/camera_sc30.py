@@ -64,11 +64,11 @@ class Camera:
                     print("Close enough to Corn, stopping")
                     camera_order = 4
                 elif cx < cap_cx - 50:
-                    print("Corn is on the right")
-                    camera_order = 2
-                elif cx > cap_cx + 50:
                     print("Corn is on the left")
                     camera_order = 3
+                elif cx > cap_cx + 50:
+                    print("Corn is on the right")
+                    camera_order = 2
                 else:
                     print("Corn is in the center")
                     camera_order = 1

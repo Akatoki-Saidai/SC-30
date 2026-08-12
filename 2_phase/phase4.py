@@ -42,7 +42,6 @@ def setup_sensors():
     # --- Camera ---
     print("cameraセットアップ開始")
     cam = None
-    cam.start()
     try:
         cam = Camera()
     except Exception as e:

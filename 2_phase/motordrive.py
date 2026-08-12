@@ -171,8 +171,8 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
         elif d == 's': mr, ml = -p, -p
         elif d == 'a': mr, ml = p, p * turning_spddec_param  # 左旋回
         elif d == 'd': mr, ml = p * turning_spddec_param, p  # 右旋回
-        elif d == 'q': mr, ml = -p, p   # その場左
-        elif d == 'e': mr, ml = p, -p   # その場右
+        elif d == 'q': mr, ml = p, -p   # その場左
+        elif d == 'e': mr, ml = -p, p   # その場右
         else: return False
         
         motor_right.value = mr

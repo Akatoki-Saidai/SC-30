@@ -17,6 +17,8 @@ PIN_VM = 4
 
 # 安全係数 (8.4V満充電時に6V相当へ抑える)
 MAX_POWER_LIMIT = 6.0 / 8.4
+turning_spddec_param = 0.5 #旋回時片輪の減速パラメータ (0.0~1.0)
+
 
 motor_right = None
 motor_left = None
@@ -71,13 +73,13 @@ def set_values(direction, power):
     elif direction == "s":
         mr, ml = -p, -p
     elif direction == "a":
-        mr, ml = -p, p  # 左旋回
+        mr, ml = p, p * turning_spddec_param  # 左旋回
     elif direction == "d":
-        mr, ml = p, -p  # 右旋回
+        mr, ml = p * turning_spddec_param, p  # 右旋回
     elif direction == "q":
-        mr, ml = 0, p  # その場左
+        mr, ml = p, -p  # その場左
     elif direction == "e":
-        mr, ml = p, 0  # その場右
+        mr, ml = -p, p  # その場右
     else:
         return False
 

@@ -14,7 +14,7 @@ NICHROME_PIN = 16
 # モジュール読み込み
 # ==========================================
 try:
-    from camera import Camera
+    from camera_sc30 import Camera
     from bno055 import BNO055
     from bme280 import BME280Sensor
     from gps import idokeido, calculate_distance_and_angle
@@ -42,8 +42,13 @@ def setup_sensors():
     # --- Camera ---
     print("cameraセットアップ開始")
     cam = None
+    cam.start()
     try:
-        cam = Camera(model_path="./my_custom_model.pt", debug=True)
+        cam = Camera()
+    except Exception as e:
+        print(f"Camera Setup Error: {e}")
+    try:
+        cam.start()
     except Exception as e:
         print(f"Camera Setup Error: {e}")
 
@@ -94,8 +99,9 @@ def setup_sensors():
 def main():
 
     # --- 設定 ---
-    GOAL_LAT = 35.000000
-    GOAL_LON = 139.000000
+    # 能代公園
+    GOAL_LAT = 40.212932
+    GOAL_LON = 140.018288
 
     bno, cam, bme, qnh, motor_ok, gpio_ok = setup_sensors()
 
@@ -113,6 +119,9 @@ def main():
             try:
                 if phase == 4:
                     #ここに近距離フェーズの処理
+                    try:
+                        #変数の初期化
+                        is_stacked = False
                     print("\n--- フェーズ4: 近距離フェーズ（カメラ誘導） ---")
                     if not cam:
                         print("カメラが認識されていません。フェーズ4をスキップします。")
@@ -128,12 +137,17 @@ def main():
                                     is_inverted = (gravity is not None and gravity[2] < -2.0)
     
                                 #カメラで画像取得＆推論
-                                frame, x_pct, order, area = cam.capture_and_detect()
-                                is_stacked = 0
+                                cap = cam.capture_image()
+                                if cap is None:
+                                    time.sleep(0.1)
+                                    continue
+                                cap = cam.histogram_equalization(cap)
+                                cap = cam.detect_cone(cap)
+                                cx, cy, _, order = cam.get_cone_position(cap)
     
-                                #YOLOの指令に基づく行動
+                                #orderに基づく行動
                                 if order == 4:
-                                    print(f"ターゲットに超接近（面積: {area}）。ゴールと判定します！")
+                                    print(f"ターゲットに超接近。ゴールと判定します！")
                                     if motor_ok:
                                         md.stop()
                                     break 
@@ -256,6 +270,8 @@ def main():
                 GPIO.output(NICHROME_PIN, 0) 
                 GPIO.cleanup()
             except: pass
+        try: cam.release()
+        except: pass
         try: cv2.destroyAllWindows()
         except: pass
         print("完了。お疲れ様でした。")

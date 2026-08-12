@@ -31,7 +31,7 @@ import ijochi
 # ---------------------------------------------------------
 delta_power = 0.1 # スムーズな加速・減速のための刻み幅
 MAX_POWER_LIMIT = 6.0/8.4 #8.4V満充電時に6V相当の電圧にするための安全係数
-turning_spddec_param = 0.7 #旋回時片輪の減速パラメータ (0.0~1.0)
+turning_spddec_param = 0.5 #旋回時片輪の減速パラメータ (0.0~1.0)
 
 # DCモータのピン設定 (gpiozero用: BCM番号)
 # ※ 実機の配線に合わせて数値を変更してください
@@ -169,8 +169,8 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
         p = min(1.0 , p) #浮動小数点の誤差で1.0を超えないように
         if d == 'w':   mr, ml = p, p
         elif d == 's': mr, ml = -p, -p
-        elif d == 'a': mr, ml = p * turning_spddec_param, p  # 左旋回
-        elif d == 'd': mr, ml = p, p * turning_spddec_param  # 右旋回
+        elif d == 'a': mr, ml = p, p * turning_spddec_param  # 左旋回
+        elif d == 'd': mr, ml = p * turning_spddec_param, p  # 右旋回
         elif d == 'q': mr, ml = -p, p   # その場左
         elif d == 'e': mr, ml = p, -p   # その場右
         else: return False

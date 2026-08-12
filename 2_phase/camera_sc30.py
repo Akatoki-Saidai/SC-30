@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 break
             cap = camera.histogram_equalization(cap)
             cap = camera.detect_cone(cap)
-            cx, cy, cap, camera_order = camera.get_cone_position(cap)
+            cx, cy, _, camera_order = camera.get_cone_position(cap)
             cv2.waitKey(1)  # Adjust the wait time as needed
             print(cx, cy, camera_order)
         except Exception as e:

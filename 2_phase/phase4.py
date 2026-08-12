@@ -118,9 +118,7 @@ def main():
             try:
                 if phase == 4:
                     #ここに近距離フェーズの処理
-                    try:
-                        #変数の初期化
-                        is_stacked = False
+                    is_stacked = False
                     print("\n--- フェーズ4: 近距離フェーズ（カメラ誘導） ---")
                     if not cam:
                         print("カメラが認識されていません。フェーズ4をスキップします。")

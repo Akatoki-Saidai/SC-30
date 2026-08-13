@@ -211,7 +211,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                 # センサーチェック (5回サンプリング)
                 for _ in range(5):
                     gyro = bno.gyroscope()
-                    accelz = bno.acceleration()[2]  # Z軸加速度を取得
+                    accelz = bno.accelerometer()[2]  # Z軸加速度を取得
                     # センサーエラー時は検知しない
                     if gyro is None or accelz is None:
                         stack_detected = False

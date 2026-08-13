@@ -227,6 +227,7 @@ def calculate_distance_and_angle(current_lat, current_lon, start_lat, start_lon,
 
         # 移動していない(5m未満)場合でも、距離だけは正しく返す
         if dist_move < 3.0:  # 5m未満の移動は無視
+            print(True)
             return dist_goal, 0
 
         # 相対角度（EM.py互換：左+、右-）

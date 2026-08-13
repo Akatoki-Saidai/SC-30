@@ -540,6 +540,7 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
             prev_lat, prev_lon,
             goal_lat, goal_lon
         )
+        print(angle_rad)
 
         if distance_m == ERROR_DISTANCE:
             print("距離・角度計算失敗")
@@ -564,8 +565,6 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
             accel_threshold=stack_accel_threshold,
             motor_ok=motor_ok
         )
-        print(angle_deg, angle_rad)
-
         if stacked:
             print("\nスタック検知")
             recovery_lat, recovery_lon = recover_from_stuck(bno=bno, motor_ok=motor_ok)

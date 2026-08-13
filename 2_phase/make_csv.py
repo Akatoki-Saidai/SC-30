@@ -27,7 +27,7 @@ try:
     DEFAULT_DICT = {x : '' for x in msg_types}
 
     # --- 修正箇所：保存先ディレクトリの設定とパスの結合 ---
-    log_dir = '/home/SC-30/scripts/SC-30/5_log/csv_logs'  # 保存先ディレクトリのパスを指定
+    log_dir = '/home/akatoki/SC-30/scripts/SC-30/5_log/csv_logs'  # 保存先ディレクトリのパスを指定
     
     # ディレクトリが存在しない場合は作成（エラー回避）
     os.makedirs(log_dir, exist_ok=True)

@@ -8,47 +8,7 @@ import traceback
 import os
 import builtins
 from datetime import datetime
-
-try:
-    DEBUG = True 
-
-    # ログファイルの列定義（順番重要）
-    msg_types = [
-        'time', 'date', 'file', 'func', 'line', 'serious_error', 'error', 'warning', 'msg', 'format_exception', 
-        'phase', 'gnss_time', 'lat', 'lon', 'alt', 'alt_base_press', 'goal_lat', 'goal_lon', 
-        'temp', 'press', 'camera_area', 'camera_order', 'camera_center_x', 'camera_center_y', 
-        'camera_frame_size_x', 'camera_frame_size_y', 'motor_l', 'motor_r', 
-        'goal_relative_x', 'goal_relative_y', 'goal_relative_angle_rad', 'goal_distance', 
-        'accel_all_x', 'accel_all_y', 'accel_all_z', 'accel_line_x', 'accel_line_y', 'accel_line_z', 
-        'mag_x', 'mag_y', 'mag_z', 'gyro_x', 'gyro_y', 'gyro_z', 'grav_x', 'grav_y', 'grav_z', 
-        'euler_x', 'euler_y', 'euler_z', 'nmea'
-    ]
-    
-    DEFAULT_DICT = {x : '' for x in msg_types}
-
-    # --- 修正箇所：保存先ディレクトリの設定とパスの結合 ---
-    log_dir = '/home/sc28/SC-28/5_log/csv'
-    
-    # ディレクトリが存在しない場合は作成（エラー回避）
-    os.makedirs(log_dir, exist_ok=True)
-
-    current_time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # ディレクトリパスとファイル名を結合
-    filename = os.path.join(log_dir, f'log_{current_time_str}.csv')
-    # ----------------------------------------------------
-
-    # ファイル作成とヘッダー書き込み
-    if not os.path.exists(filename) or os.path.getsize(filename) == 0:
-        with open(filename, 'a', encoding='utf-8') as f:
-            f.write(','.join(msg_types) + '\n')
-            
-    # ファイルを常時オープン
-    log_file = open(filename, 'a', encoding='utf-8')
-    builtins.print(f"Log file created: {filename}")
-
-except Exception as e:
-    builtins.print(f"An error occured in init csv: {e}")
+import make_csv
 
 def print(msg_type : str, msg_data):
     try:

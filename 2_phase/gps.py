@@ -231,7 +231,7 @@ def calculate_distance_and_angle(current_lat, current_lon, start_lat, start_lon,
 
         # 相対角度（EM.py互換：左+、右-）
         diff_deg = -(az_goal - az_move)
-        print(f'in cal : {diff_deg}')
+        print(diff_deg)
         # -180 ~ 180 に正規化
         while diff_deg > 180:
             diff_deg -= 360

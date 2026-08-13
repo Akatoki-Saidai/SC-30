@@ -540,7 +540,6 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
             prev_lat, prev_lon,
             goal_lat, goal_lon
         )
-        print(angle_rad)
 
         if distance_m == ERROR_DISTANCE:
             print("距離・角度計算失敗")

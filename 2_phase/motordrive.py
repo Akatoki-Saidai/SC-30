@@ -332,6 +332,7 @@ if __name__ == "__main__":
         
         while True:
             cmd = input("Command (w/s/a/d/q/e) [add 'r' for inverted]: ").strip()
+            move_duration = input("Duration (seconds): ").strip()
             if not cmd: break
             
             is_inv = 'r' in cmd
@@ -340,7 +341,7 @@ if __name__ == "__main__":
             if d in ['w','s','a','d','q','e']:
                 print(f"Move {d}, Inverted={is_inv}")
                 # テストなのでスタック検知はONにして動作確認
-                stuck = move(d, 1.0, 3.0, is_inverted=is_inv, enable_stack_check=True)
+                stuck = move(d, 1.0, float(move_duration), is_inverted=is_inv, enable_stack_check=True)
                 if stuck:
                     print(">> Stuck detected! Running release sequence...")
                     check_stuck(stuck, is_inverted=is_inv)

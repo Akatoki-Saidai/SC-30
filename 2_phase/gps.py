@@ -225,8 +225,8 @@ def calculate_distance_and_angle(current_lat, current_lon, start_lat, start_lon,
         # B: 目標方向 (Current -> Goal)
         az_goal, _, dist_goal = gps.geod.inv(current_lon, current_lat, goal_lon, goal_lat)
 
-        # 移動していない(10cm未満)場合でも、距離だけは正しく返す
-        if dist_move < 0.1:
+        # 移動していない(3m未満)場合でも、距離だけは正しく返す
+        if dist_move < 3.0:  # 3m未満の移動は無視
             return dist_goal, 0
 
         # 相対角度（EM.py互換：左+、右-）

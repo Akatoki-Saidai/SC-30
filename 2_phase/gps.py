@@ -93,14 +93,15 @@ class GPS:
         最新のGPSデータを取得する
         Return: (latitude, longitude) or (None, None)
         """
-        Lat = [], Lon = []
+        Lat = []
+        Lon = []
         if not self._ensure_serial():
             return None, None
 
         try:
             # タイムアウトまで読み続け、バッファ内の最新データを取得する
             start_time = time.time()
-
+            count = 0
             while (time.time() - start_time) < self.timeout:
                 try:
                     line = self.ser.readline().decode("ascii", errors="replace").strip()
@@ -108,20 +109,11 @@ class GPS:
                     if not line:
                         continue
 
-                    if line.startswith("$GPRMC"):
-                        msg = pynmea2.parse(line)
-                        # (2) 有効判定
-                        if not self._is_valid_rmc(msg):
-                            continue
-
-                    elif line.startswith("$GPGGA"):
+                    if line.startswith("$GPGGA") or line.startswith("$GNGGA"):
                         msg = pynmea2.parse(line)
                         # (2) 有効判定
                         if not self._is_valid_gga(msg):
                             continue
-                    elif line.startswith("$GP") or line.startswith("$GN"):
-                        msg = pynmea2.parse(line)
-                        #（2）有効判定
                     else:
                         continue
 
@@ -131,6 +123,8 @@ class GPS:
                         if msg.latitude != 0.0 and msg.longitude != 0.0:
                             Lat.append(msg.latitude)
                             Lon.append(msg.longitude)
+                    if len(Lat) > 5:
+                        break  # 5件以上取得したら打ち切る
                 except pynmea2.ParseError:
                     continue
                 except Exception:

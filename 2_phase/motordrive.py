@@ -212,6 +212,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                 for _ in range(5):
                     gyro = bno.gyroscope()
                     accel = bno.accelerometer()  # Z軸加速度を取得
+                    print(f"Gyro: {gyro}, Accel: {accel}")  # デバッグ用 - センサー値を表示
                     # センサーエラー時は検知しない
                     if gyro is None or accel is None:
                         stack_detected = False
@@ -241,19 +242,19 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                         inverted = False
                         break
 
-
+                    
                     time.sleep(0.05) # サンプリング間隔
 
                 # スタック確定時の処理
                 if stack_detected:
-                    print(f'Stack Detected! Gyro: {gyro}')
+                    print(f'Stack Detected!')
                     make_csv.print('warning', 'stacking detected')
                     is_stacked = 1
                     break 
 
                 # 反転確定時の処理
                 if inverted:
-                    print(f"Inverted Detected! Accel Z: {accel[2]}")
+                    print(f"Inverted Detected!")
                     make_csv.print('warning', 'inverted detected')
                     is_stacked = 2
                     break
@@ -314,7 +315,7 @@ def check_stuck(is_stacked, is_inverted=False):
                 time.sleep(0.5)
 
             # もがき動作
-            # 1. 前進 (2秒)
+            # 1. 前進 (10秒)
             move('w', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
             
             stop()

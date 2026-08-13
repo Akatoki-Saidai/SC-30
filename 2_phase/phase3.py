@@ -85,10 +85,15 @@ RECOVERY_TURN_DEG = 60.0
 # その後2秒前進
 RECOVERY_FORWARD_TIME = 2.0
 
+# gps値変化からのスタック検知
+pre_time = 0
+now_time = 0
+
 # ------------------------------------------------------------
 # GPS
 # ------------------------------------------------------------
 GPS_FAIL_LIMIT = 6
+
 
 
 # ============================================================
@@ -513,6 +518,19 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
         curr_lat = data["lat"]
         curr_lon = data["lon"]
+        now_time = time.time()
+        if pre_time - now_time > 10.0 and prev_lat - curr_lat < 0.00001 and prev_lon - curr_lon < 0.00001:
+            print("GPS値が変化していません。スタックを検知しました。")
+            recovery_lat, recovery_lon = recover_from_stuck(bno=bno, motor_ok=motor_ok)
+
+            if recovery_lat is not None and recovery_lon is not None:
+                prev_lat = recovery_lat
+                prev_lon = recovery_lon
+            else:
+                prev_lat = curr_lat
+                prev_lon = curr_lon
+
+            continue
         accel = data["accel"]
         gyro = data["gyro"]
         mag = data["mag"]
@@ -554,25 +572,25 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
         turn_by_angle(bno=bno, angle_deg=angle_deg, motor_ok=motor_ok)
 
         print("5秒前進")
-        stacked = forward_with_stack_check(
-            bno=bno,
-            duration=FORWARD_TIME,
-            accel_threshold=stack_accel_threshold,
-            motor_ok=motor_ok
-        )
+        # stacked = forward_with_stack_check(
+        #     bno=bno,
+        #     duration=FORWARD_TIME,
+        #     accel_threshold=stack_accel_threshold,
+        #     motor_ok=motor_ok
+        # )
 
-        if stacked:
-            print("\nスタック検知")
-            recovery_lat, recovery_lon = recover_from_stuck(bno=bno, motor_ok=motor_ok)
+        # if stacked:
+        #     print("\nスタック検知")
+        #     recovery_lat, recovery_lon = recover_from_stuck(bno=bno, motor_ok=motor_ok)
 
-            if recovery_lat is not None and recovery_lon is not None:
-                prev_lat = recovery_lat
-                prev_lon = recovery_lon
-            else:
-                prev_lat = curr_lat
-                prev_lon = curr_lon
+        #     if recovery_lat is not None and recovery_lon is not None:
+        #         prev_lat = recovery_lat
+        #         prev_lon = recovery_lon
+        #     else:
+        #         prev_lat = curr_lat
+        #         prev_lon = curr_lon
 
-            continue
+        #     continue
 
         prev_lat = curr_lat
         prev_lon = curr_lon

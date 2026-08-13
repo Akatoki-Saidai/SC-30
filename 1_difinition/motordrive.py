@@ -158,10 +158,10 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
     if _gpio_initialized:
         GPIO.output(PIN_VM, 1)
 
-    # 1. 逆さ判定による方向反転
-    if is_inverted:
-        mapping = {'w': 's', 's': 'w', 'a': 'a', 'd': 'd', 'q': 'e', 'e': 'q'}
-        direction = mapping.get(direction, direction)
+    # 1. 逆さ判定による方向反転 逆さになっても大丈夫な機体とかに使えるよん
+    #if is_inverted:
+    #    mapping = {'w': 's', 's': 'w', 'a': 'a', 'd': 'd', 'q': 'e', 'e': 'q'}
+    #    direction = mapping.get(direction, direction)
 
     # 2. モーター値の設定関数 (内部ヘルパー)
     def set_values(d, unsafe_p):
@@ -235,7 +235,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                             break
                     else:
                         # 直進中: 機体全体が揺れたり動いているべき
-                        if np.linalg.norm(gyro) > 0.4:
+                        if np.linalg.norm(accel) > 0.4:
                             stack_detected = False
                             break
                     if accel[2] > -2.0: # 閾値

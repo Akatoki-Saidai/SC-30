@@ -211,18 +211,17 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                 # センサーチェック (5回サンプリング)
                 for _ in range(5):
                     gyro = bno.gyroscope()
-                    accelz = bno.acceleration()[2]  # Z軸加速度を取得
-                    print(f"Gyro: {gyro}, AccelZ: {accelz}")  # デバッグ用 - センサー値を表示
+                    accel = bno.accelerometer()  # Z軸加速度を取得
                     # センサーエラー時は検知しない
-                    if gyro is None or accelz is None:
+                    if gyro is None or accel is None:
                         stack_detected = False
                         inverted = False
                         break
                     
                     # 異常値フィルタ
                     gyro = ijochi.abnormal_check("bno", "gyro", gyro, ERROR_FLAG=False)
-                    accelz = ijochi.abnormal_check("bno", "accelz", accelz, ERROR_FLAG=False)
-                    if gyro is None or accelz is None:
+                    accel = ijochi.abnormal_check("bno", "accel", accel, ERROR_FLAG=False)
+                    if gyro is None or accel is None:
                         stack_detected = False
                         inverted = False
                         break
@@ -238,7 +237,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                         if np.linalg.norm(gyro) > 0.4:
                             stack_detected = False
                             break
-                    if accelz > -2.0: # 閾値
+                    if accel[2] > -2.0: # 閾値
                         inverted = False
                         break
 

@@ -224,18 +224,19 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                     if gyro is None or accel is None:
                         stack_detected = False
                         inverted = False
-
-                    # 判定ロジック (厳しい判定のまま維持)
-                    if direction in ['a', 'd', 'q', 'e']:
-                        # 旋回中: Z軸ジャイロが動いているべき
-                        if abs(gyro[2]) > 0.4: # 閾値
-                            stack_detected = False
-                    else:
-                        # 直進中: 機体全体が揺れたり動いているべき
-                        if np.linalg.norm(accel) > 0.4:
-                            stack_detected = False
-                    if accel[2] > -2.0: # 閾値
-                        inverted = False
+                    if accel[2] is not None and gyro is not None:
+                        # 判定ロジック (厳しい判定のまま維持)
+                        if direction in ['a', 'd', 'q', 'e']:
+                            # 旋回中: Z軸ジャイロが動いているべき
+                            if abs(gyro[2]) > 0.4: # 閾値
+                                stack_detected = False
+                        else:
+                            # 直進中: 機体全体が揺れたり動いているべき
+                            if np.linalg.norm(accel) > 0.4:
+                                stack_detected = False
+                    if accel[2] is not None:
+                        if accel[2] > -2.0: # 閾値
+                            inverted = False
 
                     if not stack_detected and not inverted:
                         break  # どちらも検知されなければループを抜ける

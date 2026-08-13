@@ -253,7 +253,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
 
                 # 反転確定時の処理
                 if inverted:
-                    print("Inverted Detected!")
+                    print(f"Inverted Detected! Accel Z: {accel[2]}")
                     make_csv.print('warning', 'inverted detected')
                     is_stacked = 2
                     break

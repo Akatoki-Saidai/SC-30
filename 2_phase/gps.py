@@ -8,6 +8,7 @@ import serial
 import pynmea2
 import time
 import math
+import statistics
 import pyproj
 from datetime import datetime, timedelta
 
@@ -92,6 +93,7 @@ class GPS:
         最新のGPSデータを取得する
         Return: (latitude, longitude) or (None, None)
         """
+        Lat = [], Lon = []
         if not self._ensure_serial():
             return None, None
 
@@ -127,14 +129,17 @@ class GPS:
                     if hasattr(msg, "latitude") and hasattr(msg, "longitude"):
                         # (1) 0.0,0.0 は無効データとして弾く（両方0のときだけ弾く）
                         if msg.latitude != 0.0 and msg.longitude != 0.0:
-                            return msg.latitude, msg.longitude
-
+                            Lat.append(msg.latitude)
+                            Lon.append(msg.longitude)
                 except pynmea2.ParseError:
                     continue
                 except Exception:
                     continue
-
-            return None, None
+            # 最新のデータ中央値を返す（なければNone）
+            if Lat and Lon:
+                return statistics.median(Lat), statistics.median(Lon)
+            else:
+                return None, None
 
         except Exception as e:
             print(f"GPS Read Error: {e}")

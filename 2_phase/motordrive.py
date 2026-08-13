@@ -146,9 +146,9 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
     
     # バリデーション
     max_input = 1.0 / MAX_POWER_LIMIT #上限を約1.4まで許容するように
-    if not (0.0 <= power <= max_input):
-        print("Error: power must be 0.0 - 1.0")
-        return 0
+    # if not (0.0 <= power <= max_input):
+    #     print("Error: power must be 0.0 - 1.0")
+    #     return 0
     
     setup_motors()
     if not (motor_right and motor_left):
@@ -287,15 +287,15 @@ def check_stuck(is_stacked, is_inverted=False):
 
             # もがき動作
             # 1. 後退 (3秒)
-            move('s', 1.0, 3.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('s', 6.4 / 8.0, 3.0, is_inverted=is_inverted, enable_stack_check=False)
             time.sleep(0.5)
             
             # 2. 右旋回 (1秒)
-            move('d', 1.0, 1.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('d', 6.4 / 8.0, 1.0, is_inverted=is_inverted, enable_stack_check=False)
             time.sleep(0.5)
             
             # 3. 前進 (2秒) - トライ
-            move('w', 1.0, 2.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('w', 6.4 / 8.0, 2.0, is_inverted=is_inverted, enable_stack_check=False)
             time.sleep(0.5)
             
             stop()
@@ -316,7 +316,7 @@ def check_stuck(is_stacked, is_inverted=False):
 
             # もがき動作
             # 1. 後退 (10秒)
-            move('w', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('w', 6.4 / 8.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
             
             stop()
             print("Inverted Release Sequence Finished.")

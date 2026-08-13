@@ -314,7 +314,7 @@ def check_stuck(is_stacked, is_inverted=False):
                 time.sleep(0.5)
 
             # もがき動作
-            # 1. 前進 (10秒)
+            # 1. 後退 (10秒)
             move('s', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
             
             stop()

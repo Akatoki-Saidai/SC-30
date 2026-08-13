@@ -111,6 +111,7 @@ class GPS:
                         continue
 
                     if line.startswith("$GPGGA") or line.startswith("$GNGGA"):
+                        print(line)
                         msg = pynmea2.parse(line)
                         # (2) 有効判定
                         if not self._is_valid_gga(msg):

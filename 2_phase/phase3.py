@@ -65,7 +65,7 @@ MAX_TURN_ATTEMPTS = 3
 # スタック検知
 # ------------------------------------------------------------
 # ★実験によって決める必要がある
-STACK_ACCEL_THRESHOLD = None
+STACK_ACCEL_THRESHOLD = 0.5  # m/s^2
 
 # ax, ay, az がすべて閾値以下の状態が1秒続いたらスタック
 STACK_HOLD_TIME = 1.0

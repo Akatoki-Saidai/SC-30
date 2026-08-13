@@ -207,19 +207,23 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
             while time.time() - start_t < remaining_time:
                 # --- スタック検知 (ご要望により既存ロジックを維持) ---
                 stack_detected = True
-                
+                inverted = True
                 # センサーチェック (5回サンプリング)
                 for _ in range(5):
                     gyro = bno.gyroscope()
+                    accelz = bno.acceleration()[2]  # Z軸加速度を取得
                     # センサーエラー時は検知しない
-                    if gyro is None:
+                    if gyro is None or accelz is None:
                         stack_detected = False
+                        inverted = False
                         break
                     
                     # 異常値フィルタ
                     gyro = ijochi.abnormal_check("bno", "gyro", gyro, ERROR_FLAG=False)
-                    if gyro is None:
+                    accelz = ijochi.abnormal_check("bno", "accelz", accelz, ERROR_FLAG=False)
+                    if gyro is None or accelz is None:
                         stack_detected = False
+                        inverted = False
                         break
 
                     # 判定ロジック (厳しい判定のまま維持)
@@ -233,6 +237,10 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                         if np.linalg.norm(gyro) > 0.4:
                             stack_detected = False
                             break
+                    if accelz > -2.0: # 閾値
+                        stack_detected = False
+                        break
+
                     
                     time.sleep(0.05) # サンプリング間隔
 
@@ -242,6 +250,13 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                     make_csv.print('warning', 'stacking detected')
                     is_stacked = 1
                     break 
+
+                # 反転確定時の処理
+                if inverted:
+                    print("Inverted Detected!")
+                    make_csv.print('warning', 'inverted detected')
+                    is_stacked = 2
+                    break
 
                 # 待機 (残り時間 or 0.1秒)
                 elapsed = time.time() - start_t
@@ -288,6 +303,26 @@ def check_stuck(is_stacked, is_inverted=False):
         except Exception as e:
             print(f"Error in check_stuck: {e}")
             make_csv.print("error", f"check_stuck error: {e}")
+    if is_stacked == 2:
+        try:
+            print("Starting Inverted Release Sequence...")
+            # LED点滅
+            for _ in range(3):
+                GPIO.output(PIN_LED, 1)
+                time.sleep(0.5)
+                GPIO.output(PIN_LED, 0)
+                time.sleep(0.5)
+
+            # もがき動作
+            # 1. 前進 (2秒)
+            move('w', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
+            
+            stop()
+            print("Inverted Release Sequence Finished.")
+            
+        except Exception as e:
+            print(f"Error in check_stuck (inverted): {e}")
+            make_csv.print("error", f"check_stuck inverted error: {e}")
 
 if __name__ == "__main__":
     # 単体テスト用

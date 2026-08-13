@@ -217,7 +217,6 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                     if gyro is None or accel is None:
                         stack_detected = False
                         inverted = False
-                        break
                     
                     # 異常値フィルタ
                     gyro = ijochi.abnormal_check("bno", "gyro", gyro, ERROR_FLAG=False)
@@ -225,22 +224,21 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                     if gyro is None or accel is None:
                         stack_detected = False
                         inverted = False
-                        break
 
                     # 判定ロジック (厳しい判定のまま維持)
                     if direction in ['a', 'd', 'q', 'e']:
                         # 旋回中: Z軸ジャイロが動いているべき
                         if abs(gyro[2]) > 0.4: # 閾値
                             stack_detected = False
-                            break
                     else:
                         # 直進中: 機体全体が揺れたり動いているべき
                         if np.linalg.norm(accel) > 0.4:
                             stack_detected = False
-                            break
                     if accel[2] > -2.0: # 閾値
                         inverted = False
-                        break
+
+                    if not stack_detected and not inverted:
+                        break  # どちらも検知されなければループを抜ける
 
                     
                     time.sleep(0.05) # サンプリング間隔

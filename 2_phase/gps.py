@@ -213,6 +213,7 @@ def calculate_distance_and_angle(current_lat, current_lon, start_lat, start_lon,
                       負(-) = 右 (Right)
     """
     # 座標が取れていない場合はエラー値を返す
+    print("1")
     if None in [current_lat, current_lon, start_lat, start_lon, goal_lat, goal_lon]:
         return ERROR_DISTANCE, 0
 

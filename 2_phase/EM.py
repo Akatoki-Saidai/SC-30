@@ -17,19 +17,6 @@
 #   2. phase3.py の run_long_distance_phase() は元々 phase3.py の main() から
 #      `phase = run_long_distance_phase(...)` として呼ばれていたので、
 #      それと全く同じ形で phase==3 ブロックから呼び出している（関数の中身は無変更）。
-#   3. phase4.py の main() 冒頭にあった GOAL_LAT / GOAL_LON のローカル代入
-#      （能代公園の座標）は、そのまま phase==4 に入った直後に配置しているが、
-#      phase3.py 側の GOAL_LAT / GOAL_LON（module levelの定数）と名前が同じなので、
-#      1つの main() 関数内でそのまま代入すると Python の変数スコープの都合で
-#      phase3 実行時に UnboundLocalError になってしまう。これを避けるためだけに
-#      `global GOAL_LAT, GOAL_LON` を1行追加している（値・タイミング・処理内容は無変更）。
-#   4. setup_sensors() は phase1&2.py のものをそのまま採用し、統合後の
-#      main() の先頭で1回だけ呼び出している（phase4.py にも同名の setup_sensors()
-#      があったが、名前衝突を避けるためこちらは統合せず未使用のまま下に残してある）。
-#   5. camera_sc30.py 経由の Camera と、phase1&2.py が期待する
-#      `from camera import Camera`（model_path引数ありのAPI）は API が一致していない。
-#      →この点は元コードのまま(=接続しないと動かない状態)残してあるので、
-#        実機で動かす前に別途すり合わせが必要です。
 # ============================================================
 
 import time
@@ -50,7 +37,7 @@ NICHROME_PIN = 16
 # 各センサ／モジュールは実機環境でのみ利用可能な依存があるため、
 # インポート時に失敗しても他の機能をテストできるように個別にガードします。
 
-# --- phase1&2.py が期待していたカメラ import（現状 "camera" モジュールは存在しない） ---
+# --- phase1&2.py が期待していたカメラ import ---
 try:
     from camera_sc30 import Camera
 except Exception as e:
@@ -904,9 +891,9 @@ def main():
             # 近距離フェーズ（phase4.py の "if phase == 4:" ブロックそのまま）
             # ==========================
             elif phase == 4:
-                # --- phase4.py の main() 冒頭にあったゴール座標（能代公園） ---
-                GOAL_LAT = 40.212932
-                GOAL_LON = 140.018288
+                # --- phase4.py の main() ゴール座標 ---
+                GOAL_LAT = 40.1426151 # 本番
+                GOAL_LON = 139.9876656
 
                 #ここに近距離フェーズの処理
                 is_stacked = False

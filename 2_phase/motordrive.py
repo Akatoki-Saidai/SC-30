@@ -241,12 +241,12 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                         inverted = False
                         break
 
-                    
+
                     time.sleep(0.05) # サンプリング間隔
 
                 # スタック確定時の処理
                 if stack_detected:
-                    print("Stack Detected!")
+                    print(f'Stack Detected! Gyro: {gyro}')
                     make_csv.print('warning', 'stacking detected')
                     is_stacked = 1
                     break 

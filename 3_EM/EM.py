@@ -52,7 +52,7 @@ NICHROME_PIN = 16
 
 # --- phase1&2.py が期待していたカメラ import（現状 "camera" モジュールは存在しない） ---
 try:
-    from camera import Camera
+    from camera_sc30 import Camera
 except Exception as e:
     Camera = None
     print(f"Camera import error: {e}")

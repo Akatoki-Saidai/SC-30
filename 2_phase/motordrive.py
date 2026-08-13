@@ -201,7 +201,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
         set_values(direction, power) # 目標速度維持
 
         # スタック検知条件: 回転0.5秒以上 or 直進1.5秒以上の移動 かつ センサーあり かつ 検知有効
-        if ((direction in ['w', 's'] and duration >= 1.5) or (direction in ['a', 'd', 'q', 'e'] and duration >= 0.5)) and bno is not None and enable_stack_check:
+        if ((direction in ['w', 's'] and duration >= 1.5) or (direction in ['a', 'd', 'q', 'e'] and duration >= 0.1)) and bno is not None and enable_stack_check:
             start_t = time.time()
             
             while time.time() - start_t < remaining_time:

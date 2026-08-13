@@ -153,7 +153,7 @@ def main():
                                     print("ターゲットを見失いました。探索のため右回転します。")
                                     lost_count += 1
                                     if motor_ok:
-                                        md.move('e', power=0.7, duration=0.5, is_inverted=is_inverted, enable_stack_check=False)
+                                        md.move('e', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)
                                         
                                     #10回連続（約5秒間）見失ったら、GPSで現在地を確認する
                                     if lost_count >= 10:
@@ -187,11 +187,11 @@ def main():
                                 elif order == 2:
                                     print("ターゲットが右です。右に旋回してから前進します。")
                                     if motor_ok:
-                                        is_stacked = md.move('e', power=0.7, duration=0.5, is_inverted=is_inverted, enable_stack_check=False)                                        
+                                        is_stacked = md.move('e', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)                                        
                                 elif order == 3:
                                     print("ターゲットが左です。左に旋回してから前進します。")
                                     if motor_ok:
-                                        is_stacked = md.move('q', power=0.7, duration=0.5, is_inverted=is_inverted, enable_stack_check=False)    
+                                        is_stacked = md.move('q', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)    
                                 # ④ スタック判定とリカバリー（motordriveにお任せ）
                                 if motor_ok and is_stacked:
                                     print("スタックを検知しました。リカバリー行動を開始します。")

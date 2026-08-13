@@ -252,64 +252,63 @@ def turn_by_angle(bno, angle_deg, motor_ok=True):
         return
 
     # BNO055が使えない場合
-    if bno is None:
-        cmd = LEFT_TURN_CMD if angle_deg > 0 else RIGHT_TURN_CMD
-        turn_time = abs(angle_deg) / OMEGA_DEG_PER_SEC
-        turn_time = max(turn_time, MIN_TURN_TIME)
-        turn_time = min(turn_time, MAX_TURN_TIME)
+    cmd = LEFT_TURN_CMD if angle_deg > 0 else RIGHT_TURN_CMD
+    turn_time = abs(angle_deg) / OMEGA_DEG_PER_SEC
+    turn_time = max(turn_time, MIN_TURN_TIME)
+    turn_time = min(turn_time, MAX_TURN_TIME)
 
-        md.move(
-            cmd,
-            power=POWER,
-            duration=turn_time,
-            is_inverted=False,
-            enable_stack_check=False
-        )
-        return
+    md.move(
+        cmd,
+        power=POWER,
+        duration=turn_time,
+        is_inverted=False,
+        enable_stack_check=False
+    )
+    return
 
-    # BNO055フィードバック旋回
-    euler = bno.euler()
-    if euler is None:
-        print("BNO055 Euler角取得失敗")
-        return
+    # # BNO055フィードバック旋回
+    # euler = bno.euler()
+    # if euler is None:
+    #     print("BNO055 Euler角取得失敗")
+    #     return
 
-    start_yaw = euler[0]
-    target_yaw = (start_yaw + angle_deg) % 360.0
+    # start_yaw = euler[0]
+    # target_yaw = (start_yaw + angle_deg) % 360.0
 
-    print(f"旋回開始：現在Yaw={start_yaw:.1f}° / 目標Yaw={target_yaw:.1f}°")
+    # print(f"旋回開始：現在Yaw={start_yaw:.1f}° / 目標Yaw={target_yaw:.1f}°")
 
-    # 最大3回補正
-    for attempt in range(MAX_TURN_ATTEMPTS):
-        euler = bno.euler()
-        if euler is None:
-            print("Yaw取得失敗")
-            break
+    # # 最大3回補正
+    # for attempt in range(MAX_TURN_ATTEMPTS):
+    #     euler = bno.euler()
+    #     if euler is None:
+    #         print("Yaw取得失敗")
+    #         break
 
-        current_yaw = euler[0]
-        diff = normalize_angle(target_yaw - current_yaw)
+    #     current_yaw = euler[0]
+    #     diff = normalize_angle(target_yaw - current_yaw)
 
-        print(f"現在Yaw={current_yaw:.1f}° / 残り={diff:.1f}°")
+    #     print(f"現在Yaw={current_yaw:.1f}° / 残り={diff:.1f}°")
 
-        if abs(diff) <= TURN_TOLERANCE_DEG:
-            print("旋回完了")
-            return
+    #     if abs(diff) <= TURN_TOLERANCE_DEG:
+    #         print("旋回完了")
+    #         return
 
-        cmd = LEFT_TURN_CMD if diff > 0 else RIGHT_TURN_CMD
-        turn_time = abs(diff) / OMEGA_DEG_PER_SEC
-        turn_time = max(turn_time, MIN_TURN_TIME)
-        turn_time = min(turn_time, MAX_TURN_TIME)
+    #     cmd = LEFT_TURN_CMD if diff > 0 else RIGHT_TURN_CMD
+    #     turn_time = abs(diff) / OMEGA_DEG_PER_SEC
+    #     turn_time = max(turn_time, MIN_TURN_TIME)
+    #     turn_time = min(turn_time, MAX_TURN_TIME)
 
-        print(f"旋回補正 {attempt + 1}/{MAX_TURN_ATTEMPTS} {turn_time:.2f}s")
+    #     print(f"旋回補正 {attempt + 1}/{MAX_TURN_ATTEMPTS} {turn_time:.2f}s")
 
-        md.move(
-            cmd,
-            power=POWER,
-            duration=turn_time,
-            is_inverted=False,
-            enable_stack_check=False
-        )
-        time.sleep(0.3)
-    print(f"ターゲットYaw{target_yaw} / 現在Yaw{current_yaw}")
+    #     md.move(
+    #         cmd,
+    #         power=POWER,
+    #         duration=turn_time,
+    #         is_inverted=False,
+    #         enable_stack_check=False
+    #     )
+    #    time.sleep(0.3)
+    #print(f"ターゲットYaw{target_yaw} / 現在Yaw{current_yaw}")
 
 
 # ============================================================

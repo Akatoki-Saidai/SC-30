@@ -309,6 +309,7 @@ def turn_by_angle(bno, angle_deg, motor_ok=True):
             enable_stack_check=False
         )
         time.sleep(0.3)
+    print(f"ターゲットYaw{target_yaw} / 現在Yaw{current_yaw}")
 
 
 # ============================================================

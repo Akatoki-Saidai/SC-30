@@ -246,7 +246,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
 
                 # スタック確定時の処理
                 if stack_detected:
-                    print("Stack Detected!")
+                    print(f'Stack Detected! Gyro: {gyro}')
                     make_csv.print('warning', 'stacking detected')
                     is_stacked = 1
                     break 
@@ -314,7 +314,7 @@ def check_stuck(is_stacked, is_inverted=False):
                 time.sleep(0.5)
 
             # もがき動作
-            # 1. 前進 (2秒)
+            # 1. 前進 (10秒)
             move('w', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
             
             stop()

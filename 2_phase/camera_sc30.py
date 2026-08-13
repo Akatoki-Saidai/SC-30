@@ -11,9 +11,9 @@ class Camera:
         except Exception as e:
             print(f"Error initializing camera: {e}")
             self.picam2 = None
-        self.hsv_min1 = np.array([0, 180, 180])
+        self.hsv_min1 = np.array([0, 180, 150])
         self.hsv_max1 = np.array([10, 255, 255])
-        self.hsv_min2 = np.array([170, 180, 180])
+        self.hsv_min2 = np.array([170, 180, 150])
         self.hsv_max2 = np.array([179, 255, 255])
     def start(self):
         if self.picam2 is not None:
@@ -46,7 +46,7 @@ class Camera:
         cx = None
         cy = None
         #モルフォロジー変換
-        kernel = np.ones((5,5), np.uint8)
+        kernel = np.ones((3, 3), np.uint8)
         image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
         image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
         #輪郭抽出
@@ -57,7 +57,7 @@ class Camera:
             cap_cx = image.shape[1] // 2
             print(f"Largest contour area: {area}")  # デバッグ用 - 面積を表示
             M = cv2.moments(largest_contour)
-            if M["m00"] > 500:
+            if M["m00"] > 50:
                 cx = int(M["m10"] / M["m00"])
                 cy = int(M["m01"] / M["m00"])
                 if area > 150000:

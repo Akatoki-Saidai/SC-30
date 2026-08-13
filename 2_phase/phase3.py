@@ -361,7 +361,7 @@ def forward_with_stack_check(bno, duration, accel_threshold, motor_ok=True):
             continue
 
         ax, ay, az = accel
-        print(f"Linear Accel x={ax:.2f}, y={ay:.2f}, z={az:.2f}")
+        #print(f"Linear Accel x={ax:.2f}, y={ay:.2f}, z={az:.2f}")
 
         low_accel = (
             abs(ax) <= accel_threshold and

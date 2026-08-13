@@ -238,11 +238,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                             stack_detected = False
                             break
                     if accelz > -2.0: # 閾値
-<<<<<<< HEAD
                         inverted = False
-=======
-                        stack_detected = False
->>>>>>> 4d6450f21651150f0ce3eab9655f7535772a7a4d
                         break
 
                     

@@ -315,7 +315,7 @@ def check_stuck(is_stacked, is_inverted=False):
 
             # もがき動作
             # 1. 後退 (10秒)
-            move('s', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('w', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
             
             stop()
             print("Inverted Release Sequence Finished.")

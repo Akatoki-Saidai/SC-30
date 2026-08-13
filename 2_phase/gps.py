@@ -123,13 +123,12 @@ class GPS:
                         if msg.latitude != 0.0 and msg.longitude != 0.0:
                             Lat.append(msg.latitude)
                             Lon.append(msg.longitude)
-                    if len(Lat) > 5:
+                    if len(Lat) >= 5:
                         break  # 5件以上取得したら打ち切る
                 except pynmea2.ParseError:
                     continue
                 except Exception:
                     continue
-            # 最新のデータ中央値を返す（なければNone）
             if Lat and Lon:
                 return statistics.median(Lat), statistics.median(Lon)
             else:

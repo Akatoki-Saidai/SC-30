@@ -620,6 +620,7 @@ def main():
 
     except KeyboardInterrupt:
         print("\nプログラムを中断しました")
+        md.stop
     except NotImplementedError as e:
         print("\n姿勢復帰処理が未設定です")
         print(e)

@@ -519,7 +519,7 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
         curr_lat = data["lat"]
         curr_lon = data["lon"]
         now_time = time.time()
-        if pre_time - now_time > 10.0 and prev_lat - curr_lat < 0.00001 and prev_lon - curr_lon < 0.00001:
+        if now_time - pre_time > 10.0 and prev_lat - curr_lat < 0.00001 and prev_lon - curr_lon < 0.00001:
             print("GPS値が変化していません。スタックを検知しました。")
             recovery_lat, recovery_lon = recover_from_stuck(bno=bno, motor_ok=motor_ok)
 

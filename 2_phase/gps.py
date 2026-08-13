@@ -93,6 +93,7 @@ class GPS:
         最新のGPSデータを取得する
         Return: (latitude, longitude) or (None, None)
         """
+        self.ser.reset_input_buffer()
         Lat = []
         Lon = []
         if not self._ensure_serial():

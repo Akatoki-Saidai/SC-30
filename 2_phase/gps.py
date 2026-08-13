@@ -93,12 +93,12 @@ class GPS:
         最新のGPSデータを取得する
         Return: (latitude, longitude) or (None, None)
         """
-        self.ser.reset_input_buffer()
         Lat = []
         Lon = []
         if not self._ensure_serial():
             return None, None
 
+        self.ser.reset_input_buffer()
         try:
             # タイムアウトまで読み続け、バッファ内の最新データを取得する
             start_time = time.time()
@@ -111,7 +111,6 @@ class GPS:
                         continue
 
                     if line.startswith("$GPGGA") or line.startswith("$GNGGA"):
-                        print(line)
                         msg = pynmea2.parse(line)
                         # (2) 有効判定
                         if not self._is_valid_gga(msg):
@@ -144,7 +143,7 @@ class GPS:
         """JST時間を取得する（RMCのdate+timeが揃ったときだけ返す）"""
         if not self._ensure_serial():
             return None
-
+        self.ser.reset_input_buffer()
         try:
             start_time = time.time()
             while (time.time() - start_time) < self.timeout:

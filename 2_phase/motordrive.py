@@ -212,7 +212,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                 for _ in range(5):
                     gyro = bno.gyroscope()
                     accel = bno.accelerometer()  # Z軸加速度を取得
-                    print(f"Gyro: {gyro}, Accel: {accel}")  # デバッグ用 - センサー値を表示
+                    #print(f"Gyro: {gyro}, Accel: {accel}")  # デバッグ用 - センサー値を表示
                     # センサーエラー時は検知しない
                     if gyro is None or accel is None:
                         stack_detected = False
@@ -245,14 +245,14 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
 
                 # スタック確定時の処理
                 if stack_detected:
-                    print(f'Stack Detected!')
+                    print(f'Stack Detected! Gyro: {gyro}, Accel: {accel}')
                     make_csv.print('warning', 'stacking detected')
                     is_stacked = 1
                     break 
 
                 # 反転確定時の処理
                 if inverted:
-                    print(f"Inverted Detected!")
+                    print(f"Inverted Detected! Gyro: {gyro}, Accel: {accel}")
                     make_csv.print('warning', 'inverted detected')
                     is_stacked = 2
                     break

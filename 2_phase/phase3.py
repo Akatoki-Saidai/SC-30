@@ -14,7 +14,7 @@ from gps import (
     ERROR_DISTANCE,
 )
 import motordrive as md
-
+import RPi.GPIO as GPIO
 
 # ============================================================
 # 設定
@@ -204,6 +204,25 @@ def correct_orientation():
     """
     機体が反転していた場合に正しい姿勢へ戻すための動作。
     """
+    try:
+        print("Starting Inverted Release Sequence...")
+        # LED点滅
+        for _ in range(3):
+            GPIO.output(PIN_LED, 1)
+            time.sleep(0.5)
+            GPIO.output(PIN_LED, 0)
+            time.sleep(0.5)
+
+        # もがき動作
+        # 1. 前進 (10秒)
+        md.move('w', 1.0, 10.0, is_inverted=True, enable_stack_check=False)
+            
+        md.stop()
+        print("Inverted Release Sequence Finished.")
+            
+    except Exception as e:
+        print(f"Error in check_stuck (inverted): {e}")
+
     raise NotImplementedError(
         "機体姿勢復帰時のモーター動作が未設定です。"
         "機体を裏返し状態から正常姿勢へ戻す"
@@ -240,7 +259,7 @@ def turn_by_angle(bno, angle_deg, motor_ok=True):
             power=POWER,
             duration=turn_time,
             is_inverted=False,
-            enable_stack_check=False
+            enable_stack_check=True
         )
         return
 
@@ -283,7 +302,7 @@ def turn_by_angle(bno, angle_deg, motor_ok=True):
             power=POWER,
             duration=turn_time,
             is_inverted=False,
-            enable_stack_check=False
+            enable_stack_check=True
         )
         time.sleep(0.3)
 
@@ -318,7 +337,7 @@ def forward_with_stack_check(bno, duration, accel_threshold, motor_ok=True):
                 power=POWER,
                 duration=duration,
                 is_inverted=False,
-                enable_stack_check=False
+                enable_stack_check=True
             )
         except Exception as e:
             motor_error.append(e)
@@ -466,9 +485,9 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
             print("重力z < 0\n機体は正常な向きです")
             break
 
-        print("重力z >= 0\n機体の反転を検知")
-        correct_orientation()
-        time.sleep(0.5)
+        print("重力z >= 0\n機体の反転を検知\n機体姿勢復帰を開始します")
+        md.move('q', power=0.7, duration=0.5, is_inverted=True, enable_stack_check=True)
+        break
 
     prev_lat = curr_lat
     prev_lon = curr_lon
@@ -481,7 +500,7 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
             power=POWER,
             duration=INITIAL_FORWARD_TIME,
             is_inverted=False,
-            enable_stack_check=False
+            enable_stack_check=True
         )
 
     time.sleep(1.0)

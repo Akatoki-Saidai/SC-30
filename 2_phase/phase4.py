@@ -156,7 +156,7 @@ def main():
                                         md.move('e', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)
                                         
                                     #10回連続（約5秒間）見失ったら、GPSで現在地を確認する
-                                    if lost_count >= 10:
+                                    if lost_count >= 30:
                                         print("長時間ターゲットが見つかりません。現在地をGPSで確認します...")
                                         if motor_ok:
                                            md.stop()

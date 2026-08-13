@@ -1,8 +1,6 @@
 #近距離フェーズ
 import time
 import cv2
-import sys
-import math
 import numpy as np
 import RPi.GPIO as GPIO
 

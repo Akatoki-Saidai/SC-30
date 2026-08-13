@@ -221,7 +221,7 @@ def calculate_distance_and_angle(current_lat, current_lon, start_lat, start_lon,
 
         # A: 進行方向 (Start -> Current)
         az_move, _, dist_move = gps.geod.inv(start_lon, start_lat, current_lon, current_lat)
-
+        print(f"{start_lon}, {start_lat}\n{current_lon}, {current_lat}\n{az_move}")
         # B: 目標方向 (Current -> Goal)
         az_goal, _, dist_goal = gps.geod.inv(current_lon, current_lat, goal_lon, goal_lat)
 

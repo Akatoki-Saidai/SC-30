@@ -1,7 +1,6 @@
 #---------------------------------------------------------------------
 # 未確認コードのため，入れ替え必須
 # _marge_test.py 実行用に追加(2/18)
-# オフロード（土・草）向けスタック検知対応・ijochi関数渡し版
 #---------------------------------------------------------------------
 import RPi.GPIO as GPIO  # GPIOモジュールをインポート
 from gpiozero import Motor
@@ -24,45 +23,29 @@ except Exception as e:
     print(f"Error initializing BNO055 in motordrive: {e}")
     bno = None
 
-# ★ make_csvを安全にインポート
-try:
-    import make_csv
-except ImportError:
-    make_csv = None
-    print("Warning: make_csv module not found. Logging will be disabled.")
-
+import make_csv
 import ijochi
 
 # ---------------------------------------------------------
 # 定数・ピン設定
 # ---------------------------------------------------------
-# ---------------------------------------------------------
-# 定数・ピン設定
-# ---------------------------------------------------------
-delta_power = 0.1  # スムーズな加速・減速のための刻み幅
-MAX_POWER_LIMIT = 6.0 / 8.4  # 8.4V満充電時に6V相当の電圧にするための安全係数
+delta_power = 0.1 # スムーズな加速・減速のための刻み幅
+MAX_POWER_LIMIT = 6.0/8.4 #8.4V満充電時に6V相当の電圧にするための安全係数
+turning_spddec_param = 0.5 #旋回時片輪の減速パラメータ (0.0~1.0)
 
-# ---------------------------------------------------------
-# DRV8411A GPIOピン設定 (BCM番号)
-# ---------------------------------------------------------
+# DCモータのピン設定 (gpiozero用: BCM番号)
+# ※ 実機の配線に合わせて数値を変更してください
+PIN_RIGHT_FORWARD = 18 
+PIN_RIGHT_BACKWARD = 23 
 
-# 右モータ（Motor B）
-PIN_RIGHT_IN1 = 18   # DRV8411A BIN1
-PIN_RIGHT_IN2 = 23   # DRV8411A BIN2
+PIN_LEFT_FORWARD = 13 
+PIN_LEFT_BACKWARD = 24 
 
-# 左モータ（Motor A）
-PIN_LEFT_IN1 = 13    # DRV8411A AIN1
-PIN_LEFT_IN2 = 24    # DRV8411A AIN2
-
-# LED
+# その他のGPIOピン (RPi.GPIO用: BCM番号)
 PIN_LED = 5
+PIN_VM = 4
 
-# DRV8411A nSLEEP制御
-PIN_NSLEEP = 4
-
-# ---------------------------------------------------------
-# グローバル変数
-# ---------------------------------------------------------
+# グローバル変数としてモーター保持
 motor_right = None
 motor_left = None
 _gpio_initialized = False
@@ -77,10 +60,10 @@ def setup_gpio():
     if not _gpio_initialized:
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(PIN_LED, GPIO.OUT)
-        GPIO.setup(PIN_NSLEEP, GPIO.OUT)
+        GPIO.setup(PIN_VM, GPIO.OUT)
         GPIO.output(PIN_LED, 0)
         # 初期状態は安全のためDisable(0)にしておく
-        GPIO.output(PIN_NSLEEP, 0)
+        GPIO.output(PIN_VM, 0) 
         _gpio_initialized = True
 
 def setup_motors():
@@ -93,28 +76,13 @@ def setup_motors():
         # pigpio接続を使い回す (毎回接続すると不安定になるため)
         if _factory is None:
             _factory = PiGPIOFactory()
-
-        motor_left = Motor(
-            forward=PIN_LEFT_IN1,
-            backward=PIN_LEFT_IN2,
-            pin_factory=_factory
-        )
-
-        motor_right = Motor(
-            forward=PIN_RIGHT_IN1,
-            backward=PIN_RIGHT_IN2,
-            pin_factory=_factory
-        )
-
-        setup_gpio()  # LEDなども一緒に準備
-
+            
+        motor_left = Motor(forward=PIN_LEFT_FORWARD, backward=PIN_LEFT_BACKWARD, pin_factory=_factory)
+        motor_right = Motor(forward=PIN_RIGHT_FORWARD, backward=PIN_RIGHT_BACKWARD, pin_factory=_factory)
+        setup_gpio() # LEDなども一緒に準備
     except Exception as e:
         print(f"Motor Setup Error: {e}")
-        if make_csv:
-            try:
-                make_csv.print('serious_error', f"Motor Setup Error: {e}")
-            except Exception:
-                pass
+        make_csv.print('serious_error', f"Motor Setup Error: {e}")
         motor_right = None
         motor_left = None
 
@@ -160,12 +128,6 @@ def stop():
 
     motor_right.value = 0.0
     motor_left.value = 0.0
-    
-    # ★ 停止完了をCSVに記録
-    if make_csv:
-        try: make_csv.print('motor', (0.0, 0.0))
-        except Exception: pass
-        
     time.sleep(0.1)
 
 def move(direction, power, duration, is_inverted=False, enable_stack_check=True):
@@ -194,12 +156,11 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
 
     # 移動開始時にVMを有効化
     if _gpio_initialized:
-        GPIO.output(PIN_NSLEEP, 1)
+        GPIO.output(PIN_VM, 1)
 
-
-# 1. 逆さ判定による方向反転
+    # 1. 逆さ判定による方向反転
     if is_inverted:
-        mapping = {'w': 's', 's': 'w', 'a': 'q', 'd': 'e', 'q': 'd', 'e': 'a'}
+        mapping = {'w': 's', 's': 'w', 'a': 'a', 'd': 'd', 'q': 'e', 'e': 'q'}
         direction = mapping.get(direction, direction)
 
     # 2. モーター値の設定関数 (内部ヘルパー)
@@ -208,20 +169,14 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
         p = min(1.0 , p) #浮動小数点の誤差で1.0を超えないように
         if d == 'w':   mr, ml = p, p
         elif d == 's': mr, ml = -p, -p
-        elif d == 'a': mr, ml = p*0.2, p  # 左前旋回
-        elif d == 'd': mr, ml = p, p*0.2  # 右前旋回
-        elif d == 'e': mr, ml = -p*0.2, -p   # 右後旋回
-        elif d == 'q': mr, ml = -p, -p*0.2   # 左後旋回
+        elif d == 'a': mr, ml = p, p * turning_spddec_param  # 左旋回
+        elif d == 'd': mr, ml = p * turning_spddec_param, p  # 右旋回
+        elif d == 'q': mr, ml = p, -p   # その場左
+        elif d == 'e': mr, ml = -p, p   # その場右
         else: return False
         
         motor_right.value = mr
         motor_left.value = ml
-        
-        # ★ CSVへの出力記録 (左右の出力をタプルで渡す)
-        if make_csv:
-            try: make_csv.print('motor', (ml, mr)) # 左, 右の順
-            except Exception: pass
-            
         return True
 
     # 3. 加速フェーズ
@@ -241,60 +196,72 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
     remaining_time = max(0, duration - accel_time)
     is_stacked = 0
 
-    # 4. 定速移動 & 監視フェーズ (オフロード対応版)
+    # 4. 定速移動 & 監視フェーズ
     if remaining_time > 0:
         set_values(direction, power) # 目標速度維持
 
         # スタック検知条件: 2秒以上の移動 かつ センサーあり かつ 検知有効
         if duration >= 2 and bno is not None and enable_stack_check:
             start_t = time.time()
-            stuck_start_time = None
-            STUCK_DURATION_THRESHOLD = 1.5 # 1.5秒間連続で動きがなければスタックと判定
             
             while time.time() - start_t < remaining_time:
-                is_moving = False
-                
-                # まずセンサーから値を実行・取得する
-                gyro = bno.gyroscope()
+                # --- スタック検知 (ご要望により既存ロジックを維持) ---
+                stack_detected = True
+                inverted = True
+                # センサーチェック (5回サンプリング)
+                for _ in range(5):
+                    gyro = bno.gyroscope()
+                    accelz = bno.acceleration()[2]  # Z軸加速度を取得
+                    # センサーエラー時は検知しない
+                    if gyro is None or accelz is None:
+                        stack_detected = False
+                        inverted = False
+                        break
+                    
+                    # 異常値フィルタ
+                    gyro = ijochi.abnormal_check("bno", "gyro", gyro, ERROR_FLAG=False)
+                    accelz = ijochi.abnormal_check("bno", "accelz", accelz, ERROR_FLAG=False)
+                    if gyro is None or accelz is None:
+                        stack_detected = False
+                        inverted = False
+                        break
 
-                if gyro is None:
-                    stack_detected = False
+                    # 判定ロジック (厳しい判定のまま維持)
+                    if direction in ['a', 'd', 'q', 'e']:
+                        # 旋回中: Z軸ジャイロが動いているべき
+                        if abs(gyro[2]) > 0.4: # 閾値
+                            stack_detected = False
+                            break
+                    else:
+                        # 直進中: 機体全体が揺れたり動いているべき
+                        if np.linalg.norm(gyro) > 0.4:
+                            stack_detected = False
+                            break
+                    if accelz > -2.0: # 閾値
+                        stack_detected = False
+                        break
+
+                    
+                    time.sleep(0.05) # サンプリング間隔
+
+                # スタック確定時の処理
+                if stack_detected:
+                    print("Stack Detected!")
+                    make_csv.print('warning', 'stacking detected')
+                    is_stacked = 1
+                    break 
+
+                # 反転確定時の処理
+                if inverted:
+                    print("Inverted Detected!")
+                    make_csv.print('warning', 'inverted detected')
+                    is_stacked = 2
                     break
 
-                # 取得した gyro を第3引数として渡し、第1引数に "bno"、第2引数に "gyro" を指定する
-                gyro = ijochi.abnormal_check("bno", "gyro", gyro, ERROR_FLAG=False)
-                lin_accel = bno.linear_acceleration()
-                if lin_accel is not None:
-                    lin_accel = ijochi.abnormal_check(
-                        "bno", "linear_accel", lin_accel, ERROR_FLAG=False
-                    )
-
-                if gyro is not None and lin_accel is not None:
-                    if direction in ['a', 'd', 'q', 'e']:
-                        # 旋回中: 土や草の抵抗でゆっくり回ることを考慮し、閾値を0.2に下げる
-                        if abs(gyro[2]) > 0.2: 
-                            is_moving = True
-                    else:
-                        # 直進・後退中: 線形加速度(実際の進行) または ジャイロ(機体の揺れ) を見る
-                        # 空転時は線形加速度が落ちるためスタックと判定しやすくなる
-                        if np.linalg.norm(lin_accel) > 0.5 or np.linalg.norm(gyro) > 0.6:
-                            is_moving = True
-
-                if is_moving:
-                    # 動いている（または揺れている）と判定されたので、スタック状態のカウントをリセット
-                    stuck_start_time = None
-                else:
-                    # 動きが検知できなかった場合、スタックのカウントを開始
-                    if stuck_start_time is None:
-                        stuck_start_time = time.time()
-                    elif time.time() - stuck_start_time >= STUCK_DURATION_THRESHOLD:
-                        # 指定時間、継続して動きが検知できなかったらスタック確定
-                        print("Stack Detected! (Off-road logic)")
-                        make_csv.print('warning', 'stacking detected')
-                        is_stacked = 1
-                        break 
-
-                time.sleep(0.05) # 0.05秒間隔で監視を継続
+                # 待機 (残り時間 or 0.1秒)
+                elapsed = time.time() - start_t
+                sleep_t = max(0, min(0.1, remaining_time - elapsed))
+                time.sleep(sleep_t)
         else:
             # 監視なしの単純待機
             time.sleep(remaining_time)
@@ -335,9 +302,27 @@ def check_stuck(is_stacked, is_inverted=False):
             
         except Exception as e:
             print(f"Error in check_stuck: {e}")
-            if make_csv:
-                try: make_csv.print("error", f"check_stuck error: {e}")
-                except Exception: pass
+            make_csv.print("error", f"check_stuck error: {e}")
+    if is_stacked == 2:
+        try:
+            print("Starting Inverted Release Sequence...")
+            # LED点滅
+            for _ in range(3):
+                GPIO.output(PIN_LED, 1)
+                time.sleep(0.5)
+                GPIO.output(PIN_LED, 0)
+                time.sleep(0.5)
+
+            # もがき動作
+            # 1. 前進 (2秒)
+            move('w', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
+            
+            stop()
+            print("Inverted Release Sequence Finished.")
+            
+        except Exception as e:
+            print(f"Error in check_stuck (inverted): {e}")
+            make_csv.print("error", f"check_stuck inverted error: {e}")
 
 if __name__ == "__main__":
     # 単体テスト用

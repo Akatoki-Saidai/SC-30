@@ -564,7 +564,7 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
             accel_threshold=stack_accel_threshold,
             motor_ok=motor_ok
         )
-        print(angle_deg)
+        print(angle_deg, angle_rad)
 
         if stacked:
             print("\nスタック検知")

@@ -117,6 +117,8 @@ def stop():
     if current_power_r == 0 and current_power_l == 0:
         return
 
+    make_csv.print('msg', f"stop: power_r={current_power_r}, power_l={current_power_l}")
+
     # ステップ数が0にならないよう max(1, ...) で保護
     steps = max(1, int(max(abs(current_power_r), abs(current_power_l)) / delta_power))
     
@@ -129,6 +131,7 @@ def stop():
 
     motor_right.value = 0.0
     motor_left.value = 0.0
+    make_csv.print('motor', (0.0, 0.0))
     time.sleep(0.1)
 
 def move(direction, power, duration, is_inverted=False, enable_stack_check=True):
@@ -143,6 +146,8 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
         enable_stack_check: Trueならスタック検知を行う (解除動作中はFalseにする)
     """
     global motor_right, motor_left, bno
+
+    make_csv.print('msg', f"move: direction={direction}, power={power}, duration={duration}")
     
     # バリデーション
     max_input = 1.0 / MAX_POWER_LIMIT #上限を約1.4まで許容するように
@@ -178,6 +183,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
         
         motor_right.value = mr
         motor_left.value = ml
+        make_csv.print('motor', (ml, mr))
         return True
 
     # 3. 加速フェーズ
@@ -278,9 +284,11 @@ def check_stuck(is_stacked, is_inverted=False):
     スタック時の解除動作
     注意: この関数内での move() は enable_stack_check=False にする (無限再帰防止)
     """
+    make_csv.print('msg', f"check_stuck: is_stacked={is_stacked}, is_inverted={is_inverted}")
     if is_stacked == 1:
         try:
             print("Starting Stack Release Sequence...")
+            make_csv.print('msg', 'Starting Stack Release Sequence...')
             # LED点滅
             for _ in range(2):
                 GPIO.output(PIN_LED, 1)
@@ -303,6 +311,7 @@ def check_stuck(is_stacked, is_inverted=False):
             
             stop()
             print("Stack Release Sequence Finished.")
+            make_csv.print('msg', 'Stack Release Sequence Finished.')
             
         except Exception as e:
             print(f"Error in check_stuck: {e}")
@@ -310,6 +319,7 @@ def check_stuck(is_stacked, is_inverted=False):
     if is_stacked == 2:
         try:
             print("Starting Inverted Release Sequence...")
+            make_csv.print('msg', 'Starting Inverted Release Sequence...')
             # LED点滅
             for _ in range(3):
                 GPIO.output(PIN_LED, 1)
@@ -323,6 +333,7 @@ def check_stuck(is_stacked, is_inverted=False):
             
             stop()
             print("Inverted Release Sequence Finished.")
+            make_csv.print('msg', 'Inverted Release Sequence Finished.')
             
         except Exception as e:
             print(f"Error in check_stuck (inverted): {e}")
@@ -332,6 +343,7 @@ if __name__ == "__main__":
     # 単体テスト用
     try:
         print("--- Motor Test Start ---")
+        make_csv.print('msg', '--- Motor Test Start ---')
         setup_motors()
         
         while True:
@@ -344,15 +356,19 @@ if __name__ == "__main__":
             
             if d in ['w','s','a','d','q','e']:
                 print(f"Move {d}, Inverted={is_inv}")
+                make_csv.print('msg', 'f"Move {d}, Inverted={is_inv}"')
                 # テストなのでスタック検知はONにして動作確認
                 stuck = move(d, 1.0, float(move_duration), is_inverted=is_inv, enable_stack_check=True)
                 if stuck:
                     print(">> Stuck detected! Running release sequence...")
+                    make_csv.print('msg', '>> Stuck detected! Running release sequence...')
                     check_stuck(stuck, is_inverted=is_inv)
             else:
                 print("Invalid command")
+                make_csv.print('msg', 'Invalid command')
                 
     except KeyboardInterrupt:
         print("\nTest Aborted")
+        make_csv.print('msg', '\nTest Aborted')
     finally:
         cleanup()

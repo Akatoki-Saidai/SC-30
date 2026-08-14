@@ -117,7 +117,7 @@ GOAL_THRESHOLD_M = 10.0
 # ------------------------------------------------------------
 # モーター
 # ------------------------------------------------------------
-POWER = 0.7
+POWER = 1.0
 
 # サブキャリア離脱
 INITIAL_FORWARD_TIME = 5.0
@@ -669,7 +669,7 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
         print("重力z >= 0\n機体の反転を検知\n機体姿勢復帰を開始します")
         log_msg('warning', '重力z >= 0 機体の反転を検知 機体姿勢復帰を開始します')
-        md.move('q', power=0.7, duration=0.5, is_inverted=True, enable_stack_check=True)
+        md.move('q', POWER, duration=0.5, is_inverted=True, enable_stack_check=True)
         break
 
     prev_lat = curr_lat
@@ -741,7 +741,11 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
         if distance_m <= GOAL_THRESHOLD_M:
             print("\nゴール10m圏内に到達\n近距離フェーズへ移行")
+            print("フェーズ変更前に前進しますね一応")
             log_msg('msg', 'ゴール10m圏内に到達 近距離フェーズへ移行')
+            log_msg('msg', "ゴール方向へ5秒前進")
+            turn_by_angle(bno, angle_deg, True)
+            md.move('w', 1.0, 5.0, False, True)
             log_msg('phase', '4')
             return 4
 
@@ -1001,7 +1005,7 @@ def main():
                                 log_msg('msg', 'ターゲットを見失いました。探索のため右回転します。')
                                 lost_count += 1
                                 if motor_ok:
-                                    md.move('e', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)
+                                    md.move('e', power=POWER, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)
                                     
                                 #10回連続（約5秒間）見失ったら、GPSで現在地を確認する
                                 if lost_count >= 30:
@@ -1038,20 +1042,20 @@ def main():
                                 print("ターゲットは正面です。直進します。")
                                 log_msg('msg', 'ターゲットは正面です。直進します。')
                                 if motor_ok:
-                                    is_stacked = md.move('w', power=0.7, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
+                                    is_stacked = md.move('w', power=POWER, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
                                     
                             elif order == 2:
                                 print("ターゲットが右です。右に旋回してから前進します。")
                                 log_msg('msg', 'ターゲットが右です。右に旋回してから前進します。')
                                 if motor_ok:
-                                    md.move('e', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)                                        
-                                    is_stacked = md.move('w', power=0.7, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
+                                    md.move('e', power=POWER, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)                                        
+                                    is_stacked = md.move('w', power=POWER, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
                             elif order == 3:
                                 print("ターゲットが左です。左に旋回してから前進します。")
                                 log_msg('msg', 'ターゲットが左です。左に旋回してから前進します。')
                                 if motor_ok:
-                                    md.move('q', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False) 
-                                    is_stacked = md.move('w', power=0.7, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
+                                    md.move('q', power=POWER, duration=0.1, is_inverted=is_inverted, enable_stack_check=False) 
+                                    is_stacked = md.move('w', power=POWER, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
                             # ④ スタック判定とリカバリー（motordriveにお任せ）
                             if motor_ok and is_stacked:
                                 print("スタックを検知しました。リカバリー行動を開始します。")

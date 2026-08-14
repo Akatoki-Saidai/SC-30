@@ -613,7 +613,11 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
         if distance_m <= GOAL_THRESHOLD_M:
             print("\nゴール10m圏内に到達\n近距離フェーズへ移行")
+            print("フェーズ変更前に前進しますね一応")
             log_msg('msg', 'ゴール10m圏内に到達 近距離フェーズへ移行')
+            log_msg('msg', "ゴール方向へ5秒前進")
+            turn_by_angle(bno, angle_deg, True)
+            md.move('w', 1.0, 5.0, False, True)
             log_msg('phase', '4')
             return 4
 

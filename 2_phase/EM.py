@@ -787,7 +787,7 @@ def main():
                         phase = 3
                         continue
 
-                    FALL_TIMEOUT_SEC = 180.0
+                    FALL_TIMEOUT_SEC = 600.0
                     fall_start_time = time.time()
 
                     consecutive_count = 0

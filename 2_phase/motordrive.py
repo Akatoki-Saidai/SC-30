@@ -173,7 +173,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
     def set_values(d, unsafe_p):
         p = unsafe_p * MAX_POWER_LIMIT #ここで引数(0.0~1.0)を安全な値(0~0.71)に自動変換
         p = min(1.0 , p) #浮動小数点の誤差で1.0を超えないように
-        if d == 'w':   mr, ml = p, p
+        if d == 'w':   mr, ml = p, p * 0.8
         elif d == 's': mr, ml = -p, -p
         elif d == 'a': mr, ml = p, p * turning_spddec_param  # 左旋回
         elif d == 'd': mr, ml = p * turning_spddec_param, p  # 右旋回

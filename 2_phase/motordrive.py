@@ -202,7 +202,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
         set_values(direction, power) # 目標速度維持
 
         # スタック検知条件: 回転0.5秒以上 or 直進1.5秒以上の移動 かつ センサーあり かつ 検知有効
-        if ((direction in ['w', 's'] and duration >= 1.5) or (direction in ['a', 'd', 'q', 'e'] and duration >= 0.5)) and bno is not None and enable_stack_check:
+        if ((direction in ['w', 's'] and duration >= 1.5) or (direction in ['a', 'd', 'q', 'e'] and duration >= 0.5)) and bno != None and enable_stack_check:
             start_t = time.time()
             
             while time.time() - start_t < remaining_time:
@@ -225,7 +225,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                     if gyro is None or accel is None:
                         stack_detected = False
                         inverted = False
-                    if accel[2] is not None and gyro is not None:
+                    if accel[2] != None and gyro != None:
                         # 判定ロジック (厳しい判定のまま維持)
                         if direction in ['a', 'd', 'q', 'e']:
                             # 旋回中: Z軸ジャイロが動いているべき
@@ -235,7 +235,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                             # 直進中: 機体全体が揺れたり動いているべき
                             if np.linalg.norm(accel) > 0.4:
                                 stack_detected = False
-                    if accel[2] is not None:
+                    if accel[2] != None:
                         if accel[2] > -2.0: # 閾値
                             inverted = False
 

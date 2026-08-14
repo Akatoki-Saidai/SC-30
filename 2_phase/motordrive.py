@@ -30,8 +30,8 @@ import ijochi
 # 定数・ピン設定
 # ---------------------------------------------------------
 delta_power = 0.1 # スムーズな加速・減速のための刻み幅
-MAX_POWER_LIMIT = 6.0/8.4 #8.4V満充電時に6V相当の電圧にするための安全係数
-#MAX_POWER_LIMIT = 1.0 #8.4V満充電時に6V相当の電圧にするための安全係数
+#MAX_POWER_LIMIT = 6.0/8.4 #8.4V満充電時に6V相当の電圧にするための安全係数
+MAX_POWER_LIMIT = 1.0 #8.4V満充電時に6V相当の電圧にするための安全係数
 turning_spddec_param = 0.5 #旋回時片輪の減速パラメータ (0.0~1.0)
 
 # DCモータのピン設定 (gpiozero用: BCM番号)
@@ -290,15 +290,15 @@ def check_stuck(is_stacked, is_inverted=False):
 
             # もがき動作
             # 1. 後退 (3秒)
-            move('s', 6.4 / 8.0, 3.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('s', 1.0, 3.0, is_inverted=is_inverted, enable_stack_check=False)
             time.sleep(0.5)
             
             # 2. 右旋回 (1秒)
-            move('d', 6.4 / 8.0, 1.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('d', 1.0, 1.0, is_inverted=is_inverted, enable_stack_check=False)
             time.sleep(0.5)
             
             # 3. 前進 (2秒) - トライ
-            move('w', 6.4 / 8.0, 2.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('w', 1.0, 2.0, is_inverted=is_inverted, enable_stack_check=False)
             time.sleep(0.5)
             
             stop()
@@ -319,7 +319,7 @@ def check_stuck(is_stacked, is_inverted=False):
 
             # もがき動作
             # 1. 後退 (10秒)
-            move('w', 6.4 / 8.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
+            move('w', 1.0, 10.0, is_inverted=is_inverted, enable_stack_check=False)
             
             stop()
             print("Inverted Release Sequence Finished.")

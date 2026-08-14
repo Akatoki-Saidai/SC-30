@@ -405,6 +405,7 @@ def turn_by_angle(bno, angle_deg, motor_ok=True):
     turn_time = max(turn_time, MIN_TURN_TIME)
     turn_time = min(turn_time, MAX_TURN_TIME)
 
+    print(f"旋回します (角度差: {angle_deg:.1f}度, {turn_time:.2f}秒駆動)")
     log_msg('msg', f"旋回します (角度差: {angle_deg:.1f}度, {turn_time:.2f}秒駆動)")
 
     md.move(

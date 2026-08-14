@@ -31,6 +31,9 @@ import RPi.GPIO as GPIO
 LED_PIN = 5
 NICHROME_PIN = 16
 
+# --- ニクロム動作時間 ---
+nichrome_time = 8
+
 # ==========================================
 # 個別モジュール読み込み（失敗したら None を代入）
 # ==========================================
@@ -862,7 +865,7 @@ def main():
                     print("start nichrome wire")
                     log_msg('msg', 'start nichrome wire')
                     GPIO.output(NICHROME_PIN, 1)
-                    time.sleep(15)
+                    time.sleep(nichrome_time)
                     GPIO.output(NICHROME_PIN, 0)
                     print("finish nichrome wire")
                     log_msg('msg', 'finish nichrome wire')

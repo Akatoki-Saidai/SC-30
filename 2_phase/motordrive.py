@@ -369,6 +369,6 @@ if __name__ == "__main__":
                 
     except KeyboardInterrupt:
         print("\nTest Aborted")
-        make_csv.print('msg', '\nTest Aborted')
+        make_csv.print('msg', 'Test Aborted')
     finally:
         cleanup()

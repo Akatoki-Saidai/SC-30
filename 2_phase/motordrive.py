@@ -233,7 +233,7 @@ def move(direction, power, duration, is_inverted=False, enable_stack_check=True)
                                 stack_detected = False
                         else:
                             # 直進中: 機体全体が揺れたり動いているべき
-                            if np.linalg.norm(accel) > 0.4:
+                            if np.linalg.norm(gyro) > 0.4:
                                 stack_detected = False
                     if accel != None:
                         try:

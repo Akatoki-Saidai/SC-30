@@ -11,9 +11,9 @@ class Camera:
         except Exception as e:
             print(f"Error initializing camera: {e}")
             self.picam2 = None
-        self.hsv_min1 = np.array([0, 180, 150])
+        self.hsv_min1 = np.array([0, 140, 150])
         self.hsv_max1 = np.array([10, 255, 255])
-        self.hsv_min2 = np.array([170, 180, 150])
+        self.hsv_min2 = np.array([170, 140, 150])
         self.hsv_max2 = np.array([179, 255, 255])
     def start(self):
         if self.picam2 is not None:

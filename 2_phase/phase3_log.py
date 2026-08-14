@@ -683,7 +683,7 @@ def main():
             print("\n==========================")
             print(" 近距離フェーズへ移行")
             print("==========================")
-          log_msg('msg', '近距離フェーズへ移行')
+            log_msg('msg', '近距離フェーズへ移行')
 
     except KeyboardInterrupt:
         print("\nプログラムを中断しました")

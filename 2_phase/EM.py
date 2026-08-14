@@ -129,7 +129,7 @@ FORWARD_TIME = 15
 # 旋回
 # ------------------------------------------------------------
 # 1秒間に約90°旋回する想定
-OMEGA_DEG_PER_SEC = 180.0
+OMEGA_DEG_PER_SEC = 270.0
 
 # ゴール方向との差がTURN_TOLERANCE_DEG°以内なら旋回不要
 TURN_TOLERANCE_DEG = 30.0

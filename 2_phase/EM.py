@@ -32,7 +32,7 @@ LED_PIN = 5
 NICHROME_PIN = 16
 
 # --- ニクロム動作時間 ---
-nichrome_time = 8
+nichrome_time = 7
 
 # ==========================================
 # 個別モジュール読み込み（失敗したら None を代入）
@@ -131,8 +131,8 @@ FORWARD_TIME = 15
 # 1秒間に約90°旋回する想定
 OMEGA_DEG_PER_SEC = 180.0
 
-# ゴール方向との差が15°以内なら旋回不要
-TURN_TOLERANCE_DEG = 15.0
+# ゴール方向との差がTURN_TOLERANCE_DEG°以内なら旋回不要
+TURN_TOLERANCE_DEG = 30.0
 
 # 最低旋回時間
 MIN_TURN_TIME = 0.3
@@ -171,7 +171,7 @@ RECOVERY_FORWARD_TIME = 2.0
 # ------------------------------------------------------------
 # GPS
 # ------------------------------------------------------------
-GPS_FAIL_LIMIT = 6
+GPS_FAIL_LIMIT = 30
 
 
 
@@ -353,6 +353,7 @@ def correct_orientation():
     """
     try:
         print("Starting Inverted Release Sequence...")
+        log_msg('msg', 'Starting Inverted Release Sequence...')
         # LED点滅
         for _ in range(3):
             GPIO.output(PIN_LED, 1)
@@ -366,9 +367,11 @@ def correct_orientation():
             
         md.stop()
         print("Inverted Release Sequence Finished.")
+        log_msg('msg', 'Inverted Release Sequence Finished.')
             
     except Exception as e:
         print(f"Error in check_stuck (inverted): {e}")
+        log_msg('error', f"Error in check_stuck (inverted): {e}")
 
     raise NotImplementedError(
         "機体姿勢復帰時のモーター動作が未設定です。"
@@ -387,11 +390,13 @@ def turn_by_angle(bno, angle_deg, motor_ok=True):
     """
     if not motor_ok:
         print("モーターが使用できないため旋回できません")
+        log_msg('warning', 'モーターが使用できないため旋回できません')
         return
 
-    # 15°以内なら旋回しない
+    # TURN_TOLERANCE_DEG°以内なら旋回しない
     if abs(angle_deg) <= TURN_TOLERANCE_DEG:
-        print("方向差15°以内のため旋回不要")
+        print(f"方向差{TURN_TOLERANCE_DEG}°以内のため旋回不要")
+        log_msg('msg', f'方向差{TURN_TOLERANCE_DEG}°以内のため旋回不要')
         return
 
     # BNO055が使えない場合
@@ -399,6 +404,8 @@ def turn_by_angle(bno, angle_deg, motor_ok=True):
     turn_time = abs(angle_deg) / OMEGA_DEG_PER_SEC
     turn_time = max(turn_time, MIN_TURN_TIME)
     turn_time = min(turn_time, MAX_TURN_TIME)
+
+    log_msg('msg', f"旋回します (角度差: {angle_deg:.1f}度, {turn_time:.2f}秒駆動)")
 
     md.move(
         cmd,
@@ -464,6 +471,7 @@ def forward_with_stack_check(bno, duration, accel_threshold, motor_ok=True):
     """
     if not motor_ok:
         print("モーターが使用できません")
+        log_msg('warning', 'モーターが使用できません')
         return False
 
     if bno is None:
@@ -527,6 +535,8 @@ def forward_with_stack_check(bno, duration, accel_threshold, motor_ok=True):
     if motor_error:
         raise motor_error[0]
 
+    log_msg('msg', f"forward_with_stack_check stacked={stacked}")
+
     return stacked
 
 
@@ -543,9 +553,11 @@ def recover_from_stuck(bno, motor_ok=True):
     print("\n====================")
     print(" スタック復帰開始")
     print("====================")
+    log_msg('msg', 'スタック復帰開始')
 
     # ① 3秒後退
     print("3秒後退")
+    log_msg('msg', '3秒後退')
     md.move(
         "s",
         power=POWER,
@@ -556,6 +568,7 @@ def recover_from_stuck(bno, motor_ok=True):
 
     # ② 60°右旋回 (-60°)
     print("60°右旋回")
+    log_msg('msg', '60°右旋回')
     turn_by_angle(
         bno=bno,
         angle_deg=-RECOVERY_TURN_DEG,
@@ -564,9 +577,12 @@ def recover_from_stuck(bno, motor_ok=True):
 
     # ③ 2秒前進する直前のGPS
     start_lat, start_lon = idokeido()
+    log_msg('lat', start_lat)
+    log_msg('lon', start_lon)
 
     # ④ 2秒前進
     print("2秒前進")
+    log_msg('msg', '2秒前進')
     md.move(
         "w",
         power=POWER,
@@ -577,6 +593,7 @@ def recover_from_stuck(bno, motor_ok=True):
 
     time.sleep(0.5)
     print("スタック復帰終了")
+    log_msg('msg', 'スタック復帰終了')
 
     return start_lat, start_lon
 
@@ -588,6 +605,7 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
     print("\n==========================")
     print(" 遠距離フェーズ開始")
     print("==========================")
+    log_msg('msg', '--- フェーズ3: 遠距離フェーズ（GPS誘導） ---')
 
     # 初期姿勢確認ループ
     while True:
@@ -603,22 +621,37 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
         if curr_lat is not None and curr_lon is not None:
             print(f"GPS: {curr_lat}, {curr_lon}")
+            log_msg('lat', curr_lat)
+            log_msg('lon', curr_lon)
         else:
             print("GPS取得失敗")
+            log_msg('warning', '初期GPS取得失敗')
 
         if accel is not None:
             print(f"加速度: {accel}")
+            log_msg('accel_line_x', accel[0])
+            log_msg('accel_line_y', accel[1])
+            log_msg('accel_line_z', accel[2])
 
         if gravity is not None:
             print(f"重力加速度: {gravity}")
+            log_msg('grav_x', gravity[0])
+            log_msg('grav_y', gravity[1])
+            log_msg('grav_z', gravity[2])
         else:
             print("重力加速度取得失敗")
 
         if gyro is not None:
             print(f"角速度: {gyro}")
+            log_msg('gyro_x', gyro[0])
+            log_msg('gyro_y', gyro[1])
+            log_msg('gyro_z', gyro[2])
 
         if mag is not None:
             print(f"地磁気: {mag}")
+            log_msg('mag_x', mag[0])
+            log_msg('mag_y', mag[1])
+            log_msg('mag_z', mag[2])
 
         if curr_lat is None or curr_lon is None:
             time.sleep(1.0)
@@ -630,9 +663,11 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
         if gravity[2] < 0:
             print("重力z < 0\n機体は正常な向きです")
+            log_msg('msg', '重力z < 0 機体は正常な向きです')
             break
 
         print("重力z >= 0\n機体の反転を検知\n機体姿勢復帰を開始します")
+        log_msg('warning', '重力z >= 0 機体の反転を検知 機体姿勢復帰を開始します')
         md.move('q', power=0.7, duration=0.5, is_inverted=True, enable_stack_check=True)
         break
 
@@ -641,6 +676,7 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
     # サブキャリア離脱のため5秒前進
     print("\nサブキャリア離脱のため5秒前進")
+    log_msg('msg', 'サブキャリア離脱のため5秒前進')
     if motor_ok:
         md.move(
             "w",
@@ -667,9 +703,12 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
         if curr_lat is None or curr_lon is None:
             gps_fail_count += 1
             print(f"GPS取得失敗 {gps_fail_count}/{GPS_FAIL_LIMIT}")
+            log_msg('warning', f"GPS取得失敗 {gps_fail_count}/{GPS_FAIL_LIMIT}")
 
             if gps_fail_count >= GPS_FAIL_LIMIT:
                 print("GPS取得失敗が連続しました\n近距離フェーズへ移行")
+                log_msg('error', 'GPS取得失敗が連続しました 近距離フェーズへ移行')
+                log_msg('phase', '4')
                 return 4
 
             time.sleep(1.0)
@@ -677,6 +716,8 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
         gps_fail_count = 0
         print(f"GPS: {curr_lat}, {curr_lon}")
+        log_msg('lat', curr_lat)
+        log_msg('lon', curr_lon)
 
         distance_m, angle_rad = calculate_distance_and_angle(
             curr_lat, curr_lon,
@@ -686,21 +727,29 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
 
         if distance_m == ERROR_DISTANCE:
             print("距離・角度計算失敗")
+            log_msg('warning', '距離・角度計算失敗')
             time.sleep(0.5)
             continue
 
         angle_deg = math.degrees(angle_rad)
         print(f"ゴールまでの距離: {distance_m:.2f} m")
         print(f"ゴール方向との角度差: {angle_deg:.1f}°")
+        log_msg('goal_distance', distance_m)
+        log_msg('goal_relative_angle_rad', angle_rad)
+        log_msg('msg', f"ゴールまでの距離: {distance_m:.2f} m / 角度差: {angle_deg:.1f}度")
 
         if distance_m <= GOAL_THRESHOLD_M:
             print("\nゴール10m圏内に到達\n近距離フェーズへ移行")
+            log_msg('msg', 'ゴール10m圏内に到達 近距離フェーズへ移行')
+            log_msg('phase', '4')
             return 4
 
         print("ゴール方向へ旋回")
+        log_msg('msg', 'ゴール方向へ旋回')
         turn_by_angle(bno=bno, angle_deg=angle_deg, motor_ok=motor_ok)
 
         print("5秒前進")
+        log_msg('msg', '5秒前進')
         stacked = forward_with_stack_check(
             bno=bno,
             duration=FORWARD_TIME,
@@ -709,6 +758,7 @@ def run_long_distance_phase(bno, goal_lat, goal_lon, stack_accel_threshold, moto
         )
         if stacked:
             print("\nスタック検知")
+            log_msg('warning', 'スタック検知')
             recovery_lat, recovery_lon = recover_from_stuck(bno=bno, motor_ok=motor_ok)
 
             if recovery_lat is not None and recovery_lon is not None:
@@ -734,6 +784,8 @@ def main():
     bno, cam, bme, qnh, motor_ok, gpio_ok = setup_sensors()
 
     phase = 1
+    log_msg('goal_lat', GOAL_LAT)
+    log_msg('goal_lon', GOAL_LON)
 
     try:
         while True:
@@ -745,6 +797,7 @@ def main():
                 try:
                     if not bme:
                         phase = 2
+                        log_msg('phase', '2')
                         continue
 
                     _, p, _ = bme.read_all()
@@ -765,6 +818,7 @@ def main():
                         print("Go to falling phase")
                         log_msg('msg', 'Go to falling phase')
                         phase = 2
+                        log_msg('phase', '2')
                     else:
                         time.sleep(1.0)
 
@@ -783,11 +837,13 @@ def main():
                         print("BME280が使えないため落下フェーズをスキップします")
                         log_msg('warning', 'BME280 not available, skipping fall phase')
                         phase = 3
+                        log_msg('phase', '3')
                         continue
                     if not gpio_ok:
                         print("GPIOが使えないためニクロム線を安全に駆動できません")
                         log_msg('warning', 'GPIO not available, cannot drive nichrome')
                         phase = 3
+                        log_msg('phase', '3')
                         continue
 
                     FALL_TIMEOUT_SEC = 600.0
@@ -871,6 +927,7 @@ def main():
                     log_msg('msg', 'finish nichrome wire')
 
                     phase = 3
+                    log_msg('phase', '3')
 
                 except Exception as e:
                     print(f"Error in falling phase: {e}")
@@ -897,12 +954,16 @@ def main():
                 # --- phase4.py の main() ゴール座標 ---
                 GOAL_LAT = 40.14262816666667 # 本番
                 GOAL_LON = 139.987715
+                log_msg('goal_lat', GOAL_LAT)
+                log_msg('goal_lon', GOAL_LON)
 
                 #ここに近距離フェーズの処理
                 is_stacked = False
                 print("\n--- フェーズ4: 近距離フェーズ（カメラ誘導） ---")
+                log_msg('msg', '--- フェーズ4: 近距離フェーズ（カメラ誘導） ---')
                 if not cam:
                     print("カメラが認識されていません。フェーズ4をスキップします。")
+                    log_msg('error', 'カメラが認識されていません。フェーズ4をスキップします。')
                 else:
                     is_inverted = False
                     lost_count = 0 #ターゲットを見失った連続回数をカウントする変数
@@ -924,14 +985,19 @@ def main():
                             cx, cy, _, order = cam.get_cone_position(cap)
 
                             #orderに基づく行動
+                            log_msg('camera_order', order)
+                            log_msg('camera_center_x', cx)
+                            log_msg('camera_center_y', cy)
                             if order == 4:
                                 print(f"ターゲットに超接近。ゴールと判定します！")
+                                log_msg('msg', 'ターゲットに超接近。ゴールと判定します！')
                                 if motor_ok:
                                     md.stop()
                                 break 
                                 
                             elif order == 0:
                                 print("ターゲットを見失いました。探索のため右回転します。")
+                                log_msg('msg', 'ターゲットを見失いました。探索のため右回転します。')
                                 lost_count += 1
                                 if motor_ok:
                                     md.move('e', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)
@@ -939,6 +1005,7 @@ def main():
                                 #10回連続（約5秒間）見失ったら、GPSで現在地を確認する
                                 if lost_count >= 30:
                                     print("長時間ターゲットが見つかりません。現在地をGPSで確認します...")
+                                    log_msg('warning', '長時間ターゲットが見つかりません。現在地をGPSで確認します...')
                                     if motor_ok:
                                        md.stop()
                                                             
@@ -948,36 +1015,46 @@ def main():
                                             curr_lat, curr_lon, curr_lat, curr_lon, GOAL_LAT, GOAL_LON
                                         )
                                         print(f"ゴールまでの距離: {d:.2f}m")
+                                        log_msg('goal_distance', d)
+                                        log_msg('msg', f"ゴールまでの距離: {d:.2f}m")
                                                             
                                         if d <= 10.0:
                                             print("10m圏内を維持しています。カウントをリセットし、探索を継続します。")
+                                            log_msg('msg', '10m圏内を維持しています。カウントをリセットし、探索を継続します。')
                                             lost_count = 0 # まだ近くにいるので、もう一度探してみる
                                         else:
                                             print("10m圏外に出てしまいました。遠距離フェーズ(3)に戻ります。")
+                                            log_msg('warning', '10m圏外に出てしまいました。遠距離フェーズ(3)に戻ります。')
                                             phase = 3
+                                            log_msg('phase', '3')
                                             break
                                     else:
                                         print("GPS取得失敗。安全のため探索を継続します。")
+                                        log_msg('warning', 'GPS取得失敗。安全のため探索を継続します。')
                                         lost_count = 0 # 取得できなかった場合はとりあえず探索継続  
                                     
                             elif order == 1:
                                 print("ターゲットは正面です。直進します。")
+                                log_msg('msg', 'ターゲットは正面です。直進します。')
                                 if motor_ok:
                                     is_stacked = md.move('w', power=0.7, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
                                     
                             elif order == 2:
                                 print("ターゲットが右です。右に旋回してから前進します。")
+                                log_msg('msg', 'ターゲットが右です。右に旋回してから前進します。')
                                 if motor_ok:
                                     md.move('e', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False)                                        
                                     is_stacked = md.move('w', power=0.7, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
                             elif order == 3:
                                 print("ターゲットが左です。左に旋回してから前進します。")
+                                log_msg('msg', 'ターゲットが左です。左に旋回してから前進します。')
                                 if motor_ok:
                                     md.move('q', power=0.7, duration=0.1, is_inverted=is_inverted, enable_stack_check=False) 
                                     is_stacked = md.move('w', power=0.7, duration=1.5, is_inverted=is_inverted, enable_stack_check=True)
                             # ④ スタック判定とリカバリー（motordriveにお任せ）
                             if motor_ok and is_stacked:
                                 print("スタックを検知しました。リカバリー行動を開始します。")
+                                log_msg('warning', 'スタックを検知しました。リカバリー行動を開始します。')
                                 md.check_stuck(is_stacked, is_inverted=is_inverted)
                                 
                             time.sleep(0.1)
@@ -985,10 +1062,12 @@ def main():
                         except Exception as e:
                             # ＝＝＝ ここからが追加したGPS安全装置 ＝＝＝
                             print(f"カメラ等でエラー発生: {e}")
+                            log_msg('error', f"カメラ等でエラー発生: {e}")
                             if motor_ok:
                                 md.stop() # 暴走防止のため一旦停止
 
                             print("GPSで現在地を確認し、10m圏内かチェックします。")
+                            log_msg('msg', 'GPSで現在地を確認し、10m圏内かチェックします。')
                             curr_lat, curr_lon = idokeido()
 
                             if curr_lat is not None and curr_lon is not None:
@@ -997,21 +1076,29 @@ def main():
                                     curr_lat, curr_lon, curr_lat, curr_lon, GOAL_LAT, GOAL_LON
                                 )
                                 print(f"ゴールまでの距離: {d:.2f}m")
+                                log_msg('goal_distance', d)
+                                log_msg('msg', f"ゴールまでの距離: {d:.2f}m")
 
                                 if d <= 10.0:
                                     print("10m圏内を維持しています。近距離フェーズを継続します。")
+                                    log_msg('msg', '10m圏内を維持しています。近距離フェーズを継続します。')
                                     time.sleep(0.1)
                                     continue # ループの先頭に戻ってカメラ再取得
                                 else:
                                     print("10m圏外に出てしまいました。遠距離フェーズ(3)に戻ります。")
+                                    log_msg('warning', '10m圏外に出てしまいました。遠距離フェーズ(3)に戻ります。')
                                     phase = 3
+                                    log_msg('phase', '3')
                                     break # 近距離のループを抜けて、フェーズ3へ戻る
                             else:
                                 print("GPSの取得にも失敗しました。安全のため近距離フェーズを維持してリトライします。")
+                                log_msg('warning', 'GPSの取得にも失敗しました。安全のため近距離フェーズを維持してリトライします。')
                                 time.sleep(0.1)
                                 continue
                 
                 phase = 5
+                log_msg('phase', '5')
+                
 
             time.sleep(0.1)
 

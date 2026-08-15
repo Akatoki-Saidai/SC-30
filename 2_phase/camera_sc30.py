@@ -57,7 +57,7 @@ class Camera:
             cap_cx = image.shape[1] // 2
             print(f"Largest contour area: {area}")  # デバッグ用 - 面積を表示
             M = cv2.moments(largest_contour)
-            if M["m00"] > 200:
+            if M["m00"] > 800:
                 cx = int(M["m10"] / M["m00"])
                 cy = int(M["m01"] / M["m00"])
                 if area > 150000:

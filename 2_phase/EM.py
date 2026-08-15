@@ -1103,6 +1103,16 @@ def main():
                 
                 phase = 5
                 log_msg('phase', '5')
+                print("--- フェーズ5 (ゴール完了) ---")
+                make_csv.print("msg", "--- フェーズ5 (ゴール完了) ---")
+                print("LEDを点滅させて待機します。終了するには Ctrl+C を押してください。")
+                make_csv.print("msg", "LEDを点滅させて待機します。終了するには Ctrl+C を押してください。")
+                while True:
+                    GPIO.output(LED_PIN, 1) # LEDオン
+                    time.sleep(1)         # 1秒待つ
+                    GPIO.output(LED_PIN, 0) # LEDオフ
+                    time.sleep(1)         # 1秒待つ
+
                 
 
             time.sleep(0.1)
